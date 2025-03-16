@@ -380,50 +380,9 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
                 }
             }
         }
-        //fixme: client desync here
+        //fixme: cauldron 2: client desync here
         return ItemInteractionResult.CONSUME;
     }
-
-//    protected boolean isBaseIngredientPresent(FluidStack stack) {
-//        return isBaseIngredientPresent(stack2 -> CauldronPlatformHelper.fluidMatches(stack, stack2), 1);
-//    }
-//
-//    protected boolean isBaseIngredientPresent(Predicate<FluidStack> baseIngredientPredicate, int minAmount) {
-//        for (FluidStack stack : this.outputItems) {
-//            if (baseIngredientPredicate.test(stack)) {
-//                if (stack.getAmount() >= minAmount) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-
-    //todo: replace with "consumeOutput"
-//    protected void convertOutput(Predicate<ItemStack> itemToReplace, ItemStack outputItem, int maxCount) {
-//        int count = 0;
-//        for (int i = outputItems.size() - 1; i >= 0; i--) {
-//            var stack = outputItems.get(i);
-//            if (itemToReplace.test(stack)) {
-//                outputItems.set(i, outputItem.copy());
-//                count++;
-//                if (count >= maxCount) {
-//                    return;
-//                }
-//            }
-//        }
-//    }
-
-//    public boolean addToOutput(ItemStack itemStack) {
-//        for (int i = 0; i < outputItems.size(); i++) {
-//            var stack = outputItems.get(i);
-//            if (stack.isEmpty()) {
-//                outputItems.set(i, itemStack);
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 
     public void tryMeltInput(ItemStack itemStack) {
         if (level == null || !(level instanceof ServerLevel serverLevel)) {
@@ -459,38 +418,21 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
                 }
             }
         }
-//        if (!shouldMelt && isBrewable(itemStack)) {
-//            for (int i = 0; i < outputItems.size(); i++) {
-//                ItemStack potentialPotionBase = outputItems.get(i);
-//                if (!potentialPotionBase.isEmpty()) {
-//                    ItemStack output = CauldronPlatformHelper.getNonDestructiveBrewingResult(potentialPotionBase, itemStack, level);
-//                    if (!output.isEmpty()) {
-//                        outputItems.set(i, output.copy());
-//                        shouldMelt = true;
-//                    }
-//                }
-//            }
-//        }
-//        if (!shouldMelt && AlchemistCauldronRecipeRegistry.isValidIngredient(itemStack)) {
-//            for (int i = 0; i < outputItems.size(); i++) {
-//                ItemStack potentialPotionBase = outputItems.get(i).copy();
-//                if (!potentialPotionBase.isEmpty()) {
-//                    var recipe = AlchemistCauldronRecipeRegistry.getRecipeForInputs(potentialPotionBase, itemStack);
-//                    if (recipe != null && isBaseIngredientPresent(stack -> CauldronPlatformHelper.itemMatches(stack, potentialPotionBase), recipe.getInput().getCount())) {
-//                        //This given potion base has a recipe with our reagent, and we have enough of it to successfully craft the result
-//                        ItemStack result = recipe.getResult();
-//                        int toConsume = recipe.getInput().getCount();
-//                        convertOutput((stack) -> CauldronPlatformHelper.itemMatches(stack, potentialPotionBase.copy()), ItemStack.EMPTY, toConsume);
-//                        int c = result.getCount();
-//                        for (int j = 0; j < c; j++) {
-//                            addToOutput(result.split(1));
-//                        }
-//                        shouldMelt = true;
-//                        break;
-//                    }
-//                }
-//            }
-//        }
+        if (!shouldMelt && isBrewable(itemStack)) {
+            for (FluidStack fluid : fluidInventory.fluids()) {
+                ItemStack potionGhostStack = PotionFluid.from(fluid);
+                if (potionGhostStack.isEmpty()) {
+                    continue;
+                }
+                if ((serverLevel.potionBrewing().hasPotionMix(potionGhostStack, itemStack) || level.potionBrewing().hasContainerMix(potionGhostStack, itemStack))) {
+                    var potionResult = serverLevel.potionBrewing().mix(itemStack, potionGhostStack); // yes, the order switched
+                    FluidStack fluidResult = PotionFluid.from(potionResult).copyWithAmount(fluid.getAmount()); // take fluid from stack, and allow the brew to convert as much base as there was
+                    fluidInventory.drain(fluid, IFluidHandler.FluidAction.EXECUTE);
+                    fluidInventory.fill(fluidResult, IFluidHandler.FluidAction.EXECUTE);
+                    shouldMelt = true; // marks reagent item for consumption
+                }
+            }
+        }
         if (shouldMelt) {
             itemStack.shrink(1);
             setChanged();
@@ -500,24 +442,8 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
             } else {
                 level.playSound(null, this.getBlockPos(), SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.MASTER, 1, 1);
             }
-//            collapseContainer(outputItems);
         }
     }
-
-//    public void collapseContainer(NonNullList<ItemStack> container) {
-//        for (int i = 0; i < container.size(); i++) {
-//            if (container.get(i).isEmpty()) {
-//                for (int j = i + 1; j < container.size(); j++) {
-//                    var stack = container.get(j);
-//                    if (!stack.isEmpty()) {
-//                        container.set(i, stack);
-//                        container.set(j, ItemStack.EMPTY);
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     /************************************************************
      Cauldron Helpers
@@ -528,65 +454,8 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
     }
 
     public boolean isBrewable(ItemStack itemStack) {
-        return ServerConfigs.ALLOW_CAULDRON_BREWING.get() && this.level != null && CauldronPlatformHelper.isBrewingIngredient(itemStack, this.level);
+        return ServerConfigs.ALLOW_CAULDRON_BREWING.get() && this.level != null && level.potionBrewing().isIngredient(itemStack);
     }
-
-//    public int getItemWaterColor(ItemStack itemStack) {
-//        // todo: create common sync for ink colors n stuff
-//        if (this.getLevel() == null)
-//            return 0;
-//        if (itemStack.getItem() instanceof SimpleElixir simpleElixir)
-//            return simpleElixir.getMobEffect().getEffect().value().getColor();
-//        if (itemStack.is(ItemRegistry.INK_COMMON.get()))
-//            return 0x222222;
-//        if (itemStack.is(ItemRegistry.INK_UNCOMMON.get()))
-//            return 0x124300;
-//        if (itemStack.is(ItemRegistry.INK_RARE.get()))
-//            return 0x0f3844;
-//        if (itemStack.is(ItemRegistry.INK_EPIC.get()))
-//            return 0xa52ea0;
-//        if (itemStack.is(ItemRegistry.INK_LEGENDARY.get()))
-//            return 0xfcaf1c;
-//        if (itemStack.is(ItemRegistry.BLOOD_VIAL.get()))
-//            return 0x5b0716;
-//        var potion = itemStack.get(DataComponents.POTION_CONTENTS);
-//        if (potion != null && !potion.is(Potions.WATER))
-//            return potion.getColor();
-//        return BiomeColors.getAverageWaterColor(this.getLevel(), this.getBlockPos());
-//    }
-
-//    public int getAverageWaterColor() {
-//        int waterColor = BiomeColors.getAverageWaterColor(this.getLevel(), this.getBlockPos());
-//        return capFunc(handler -> {
-//            float f = 0.0F;
-//            float f1 = 0.0F;
-//            float f2 = 0.0F;
-//
-//            int i = 0;
-//            for (FluidStack fluid : handler.fluids()) {
-//                int k = waterColor;
-//
-//                if (fluid.has(DataComponents.POTION_CONTENTS)) {
-//                    var potion = fluid.get(DataComponents.POTION_CONTENTS);
-//                    if (!potion.is(Potions.WATER)) {
-//                        k = potion.getColor();
-//                    }
-//                } else if (fluid) {
-//
-//                }
-//                f += (float) ((k >> 16 & 255)) / 255.0F;
-//                f1 += (float) ((k >> 8 & 255)) / 255.0F;
-//                f2 += (float) ((k >> 0 & 255)) / 255.0F;
-//                i++;
-//            }
-//
-//            f = f / (float) i * 255.0F;
-//            f1 = f1 / (float) i * 255.0F;
-//            f2 = f2 / (float) i * 255.0F;
-//            return (int) f << 16 | (int) f1 << 8 | (int) f2;
-//        }).orElse();
-//
-//    }
 
     public static InkItem getInkFromScroll(ItemStack scrollStack) {
         var spellContainer = ISpellContainer.get(scrollStack);

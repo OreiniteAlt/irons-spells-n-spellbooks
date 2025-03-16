@@ -205,7 +205,7 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
             Function<ResourceLocation, TextureAtlasSprite> spriteAtlas = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS);
             TextureAtlasSprite texture = spriteAtlas.apply(clientFluid.getStillTexture(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos()));
             VertexConsumer consumer = texture.wrap(bufferSource.getBuffer(RenderType.translucent()));
-            var rgb = colorFromLong(clientFluid.getTintColor(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos()));
+            var rgb = colorFromLong(clientFluid.getTintColor(fluid) & clientFluid.getTintColor(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos())); // if either returns 0xFFFFFF (white) the bitwise and will choose the one that doesnt. if they return the same, we get the same
             float opacity = runningFluid / totalFluid; // creates naturally weighted sum for the opacity of proceeding layers
             runningFluid -= fluid.getAmount();
             consumer.addVertex(pose, 1 - padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(fluidlight).setNormal(0, 1, 0);
@@ -217,7 +217,6 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
     }
 
     private Vector3f colorFromLong(long color) {
-        //Copied from potion utils
         return new Vector3f(
                 ((color >> 16) & 0xFF) / 255.0f,
                 ((color >> 8) & 0xFF) / 255.0f,

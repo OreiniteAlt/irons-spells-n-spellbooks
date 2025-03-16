@@ -14,6 +14,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +62,7 @@ public class PotionFluid extends NoopFluid {
     }
 
     public static ItemStack from(FluidStack stack) {
-        if (!stack.has(DataComponents.POTION_CONTENTS) || stack.getAmount() < 250) {
+        if (stack.getAmount() < 250 || !(stack.is(Tags.Fluids.WATER) || stack.has(DataComponents.POTION_CONTENTS))) {
             return ItemStack.EMPTY;
         }
         PotionFluid.BottleType type = stack.getOrDefault(ComponentRegistry.POTION_BOTTLE_TYPE, PotionFluid.BottleType.REGULAR);
@@ -68,7 +70,7 @@ public class PotionFluid extends NoopFluid {
                 : type == BottleType.SPLASH ? Items.SPLASH_POTION
                 : Items.POTION;
         var is = new ItemStack(item);
-        is.set(DataComponents.POTION_CONTENTS, stack.get(DataComponents.POTION_CONTENTS));
+        is.set(DataComponents.POTION_CONTENTS, stack.getOrDefault(DataComponents.POTION_CONTENTS, new PotionContents(Potions.WATER)));
         return is;
     }
 
