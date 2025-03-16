@@ -18,11 +18,24 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
+
 /**
  * Recipe Type for taking liquids out of the cauldron (emptying cauldron)
  */
 public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
-                                           FluidStack fluid) implements Recipe<SingleRecipeInput> {
+                                           FluidStack fluid) implements Recipe<EmptyAlchemistCauldronRecipe.Input> {
+    public record Input(ItemStack item, FluidStack fluid) implements RecipeInput {
+        @Override
+        public ItemStack getItem(int index) {
+            return item;
+        }
+
+        @Override
+        public int size() {
+            return 1;
+        }
+    }
+
     public ItemStack result() {
         return result.copy();
     }
@@ -33,12 +46,12 @@ public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
     }
 
     @Override
-    public boolean matches(SingleRecipeInput input, Level level) {
-        return this.input.test(input.item());
+    public boolean matches(EmptyAlchemistCauldronRecipe.Input input, Level level) {
+        return this.input.test(input.item()) && input.fluid.getAmount() >= this.fluid.getAmount() && FluidStack.isSameFluidSameComponents(this.fluid, input.fluid);
     }
 
     @Override
-    public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+    public ItemStack assemble(EmptyAlchemistCauldronRecipe.Input input, HolderLookup.Provider registries) {
         return result.copy();
     }
 
