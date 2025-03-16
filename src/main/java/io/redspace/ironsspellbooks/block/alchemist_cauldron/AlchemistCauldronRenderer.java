@@ -3,7 +3,6 @@ package io.redspace.ironsspellbooks.block.alchemist_cauldron;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import io.redspace.ironsspellbooks.IronsSpellbooks;
 import io.redspace.ironsspellbooks.fluids.ICauldronColoredFluid;
 import io.redspace.ironsspellbooks.render.RenderHelper;
 import net.minecraft.client.Minecraft;
@@ -16,10 +15,12 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
@@ -28,6 +29,8 @@ import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtension
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import java.util.function.Function;
 
 
 public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistCauldronTile> {
@@ -191,58 +194,26 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
     }
 
     private void renderWater(AlchemistCauldronTile cauldron, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, float waterOffset) {
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.beaconBeam(new ResourceLocation(IronsSpellbooks.MODID, "textures/block/water_still.png"), true));
-        long color = getAverageWaterColor(cauldron);
-        var rgb = colorFromLong(color);
-
         Matrix4f pose = poseStack.last().pose();
-        int frames = 32;
-        float frameSize = 1f / frames;
-        long frame = (cauldron.getLevel().getGameTime() / 3) % frames;
-        float min_u = 0;
-        float max_u = 1;
-        float min_v = (frameSize * frame);
-        float max_v = (frameSize * (frame + 1));
-
-//        if (lastv != min_v) {
-//            IronsSpellbooks.LOGGER.debug("[{} {}] [{} {}]", min_u, max_u, min_v, max_v);
-//            lastv = min_v;
-//        }
-        consumer.addVertex(pose, 1, waterOffset, 0).setColor(rgb.x(), rgb.y(), rgb.z(), 1f).setUv(max_u, min_v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-        consumer.addVertex(pose, 0, waterOffset, 0).setColor(rgb.x(), rgb.y(), rgb.z(), 1f).setUv(min_u, min_v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-        consumer.addVertex(pose, 0, waterOffset, 1).setColor(rgb.x(), rgb.y(), rgb.z(), 1f).setUv(min_u, max_v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-        consumer.addVertex(pose, 1, waterOffset, 1).setColor(rgb.x(), rgb.y(), rgb.z(), 1f).setUv(max_u, max_v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-    }
-
-    private int getAverageWaterColor(AlchemistCauldronTile tile) {
-        float f = 0.0F;
-        float f1 = 0.0F;
-        float f2 = 0.0F;
-
-        int i = 0;
-        int waterColor = BiomeColors.getAverageWaterColor(tile.getLevel(), tile.getBlockPos());
-
-        for (FluidStack fluid : tile.fluidInventory.fluids()) {
-            int k = waterColor;
-
-            ICauldronColoredFluid clientFluid = ICauldronColoredFluid.of(IClientFluidTypeExtensions.of(fluid.getFluid()));
-            if (clientFluid.getColor(fluid) != 0xFFFFFFFF) {
-                k = clientFluid.getColor(fluid);
-            }
-            int a = fluid.getAmount();
-            f += (float) ((k >> 16 & 255)) / 255.0F * a;
-            f1 += (float) ((k >> 8 & 255)) / 255.0F * a;
-            f2 += (float) ((k >> 0 & 255)) / 255.0F * a;
-            i += a;
+        float totalFluid = cauldron.getFluidAmount();
+        float runningFluid = totalFluid;
+        float f = 0;
+        float padding = 1 / 16f;
+        for (FluidStack fluid : cauldron.fluidInventory.fluids()) {
+            IClientFluidTypeExtensions clientFluid = IClientFluidTypeExtensions.of(fluid.getFluid());
+            Function<ResourceLocation, TextureAtlasSprite> spriteAtlas = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS);
+            TextureAtlasSprite texture = spriteAtlas.apply(clientFluid.getStillTexture(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos()));
+            VertexConsumer consumer = texture.wrap(bufferSource.getBuffer(RenderType.translucent()));
+            var rgb = colorFromLong(clientFluid.getTintColor(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos()));
+            float opacity = runningFluid / totalFluid; // creates naturally weighted sum for the opacity of proceeding layers
+            runningFluid -= fluid.getAmount();
+            consumer.addVertex(pose, 1 - padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 0 + padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(0 + padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 0 + padding, waterOffset + f, 1 - padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(0 + padding, 1 - padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 1 - padding, waterOffset + f, 1 - padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 1 - padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
+            f += 0.001f;
         }
-
-        f = f / (float) i * 255.0F;
-        f1 = f1 / (float) i * 255.0F;
-        f2 = f2 / (float) i * 255.0F;
-        return (int) f << 16 | (int) f1 << 8 | (int) f2;
     }
-
-//    float lastv;
 
     private Vector3f colorFromLong(long color) {
         //Copied from potion utils
