@@ -14,6 +14,7 @@ import io.redspace.ironsspellbooks.recipe_types.alchemist_cauldron.FillAlchemist
 import io.redspace.ironsspellbooks.registries.BlockRegistry;
 import io.redspace.ironsspellbooks.registries.ItemRegistry;
 import io.redspace.ironsspellbooks.registries.RecipeRegistry;
+import io.redspace.ironsspellbooks.util.ModTags;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.Util;
 import net.minecraft.core.*;
@@ -121,6 +122,9 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
+            if (resource.is(ModTags.CAULDRON_FLUID_DISALLOW)) {
+                return 0;
+            }
             int resourceLocation = -1;
             int emptyLocation = -1;
             int remainingCapacity = 1000 - fluidAmount();

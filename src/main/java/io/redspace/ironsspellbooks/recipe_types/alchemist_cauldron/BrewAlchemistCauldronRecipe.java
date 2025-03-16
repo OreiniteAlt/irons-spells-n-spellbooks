@@ -157,7 +157,6 @@ public record BrewAlchemistCauldronRecipe(FluidStack fluidIn, Ingredient reagent
             return withResult(new FluidStack(fluid, amount));
         }
 
-
         @Override
         public RecipeBuilder unlockedBy(String name, Criterion<?> criterion) {
             return this;

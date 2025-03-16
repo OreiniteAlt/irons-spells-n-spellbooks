@@ -3,11 +3,9 @@ package io.redspace.ironsspellbooks.block.alchemist_cauldron;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import io.redspace.ironsspellbooks.fluids.ICauldronColoredFluid;
 import io.redspace.ironsspellbooks.render.RenderHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -200,6 +198,9 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
         float f = 0;
         float padding = 1 / 16f;
         for (FluidStack fluid : cauldron.fluidInventory.fluids()) {
+            int skylight = packedLight >> 4 & 15;
+            int luminosity = Math.max(skylight, fluid.getFluidType().getLightLevel(fluid));
+            int fluidlight = packedLight & 0xF00000 | luminosity << 4;
             IClientFluidTypeExtensions clientFluid = IClientFluidTypeExtensions.of(fluid.getFluid());
             Function<ResourceLocation, TextureAtlasSprite> spriteAtlas = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS);
             TextureAtlasSprite texture = spriteAtlas.apply(clientFluid.getStillTexture(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos()));
@@ -207,10 +208,10 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
             var rgb = colorFromLong(clientFluid.getTintColor(fluid.getFluid().defaultFluidState(), cauldron.getLevel(), cauldron.getBlockPos()));
             float opacity = runningFluid / totalFluid; // creates naturally weighted sum for the opacity of proceeding layers
             runningFluid -= fluid.getAmount();
-            consumer.addVertex(pose, 1 - padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-            consumer.addVertex(pose, 0 + padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(0 + padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-            consumer.addVertex(pose, 0 + padding, waterOffset + f, 1 - padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(0 + padding, 1 - padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
-            consumer.addVertex(pose, 1 - padding, waterOffset + f, 1 - padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 1 - padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 1 - padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(fluidlight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 0 + padding, waterOffset + f, 0 + padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(0 + padding, 0 + padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(fluidlight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 0 + padding, waterOffset + f, 1 - padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(0 + padding, 1 - padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(fluidlight).setNormal(0, 1, 0);
+            consumer.addVertex(pose, 1 - padding, waterOffset + f, 1 - padding).setColor(rgb.x(), rgb.y(), rgb.z(), opacity).setUv(1 - padding, 1 - padding).setOverlay(OverlayTexture.NO_OVERLAY).setLight(fluidlight).setNormal(0, 1, 0);
             f += 0.001f;
         }
     }
