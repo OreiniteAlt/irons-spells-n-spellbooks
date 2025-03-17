@@ -7,12 +7,16 @@ import io.redspace.ironsspellbooks.registries.RecipeRegistry;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
@@ -25,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * Recipe Type for putting liquids into the cauldron (filling cauldron)
  */
 public record FillAlchemistCauldronRecipe(Ingredient input, ItemStack returned,
-                                          FluidStack result, boolean mustFitAll) implements Recipe<SingleRecipeInput> {
+                                          FluidStack result, boolean mustFitAll,
+                                          Holder<SoundEvent> fillSound) implements Recipe<SingleRecipeInput> {
 
     @Override
     public FluidStack result() {
@@ -76,13 +81,15 @@ public record FillAlchemistCauldronRecipe(Ingredient input, ItemStack returned,
                 Ingredient.CODEC.fieldOf("input").forGetter(FillAlchemistCauldronRecipe::input),
                 ItemStack.CODEC.fieldOf("result").forGetter(FillAlchemistCauldronRecipe::returned),
                 FluidStack.CODEC.fieldOf("fluid").forGetter(FillAlchemistCauldronRecipe::result),
-                Codec.BOOL.optionalFieldOf("mustFitAll", true).forGetter(FillAlchemistCauldronRecipe::mustFitAll)
+                Codec.BOOL.optionalFieldOf("mustFitAll", true).forGetter(FillAlchemistCauldronRecipe::mustFitAll),
+                BuiltInRegistries.SOUND_EVENT.holderByNameCodec().optionalFieldOf("sound", BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BOTTLE_EMPTY)).forGetter(FillAlchemistCauldronRecipe::fillSound)
         ).apply(builder, FillAlchemistCauldronRecipe::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, FillAlchemistCauldronRecipe> STREAM_CODEC = StreamCodec.composite(
                 Ingredient.CONTENTS_STREAM_CODEC, FillAlchemistCauldronRecipe::input,
                 ItemStack.STREAM_CODEC, FillAlchemistCauldronRecipe::returned,
                 FluidStack.STREAM_CODEC, FillAlchemistCauldronRecipe::result,
                 ByteBufCodecs.BOOL, FillAlchemistCauldronRecipe::mustFitAll,
+                ByteBufCodecs.holderRegistry(Registries.SOUND_EVENT), FillAlchemistCauldronRecipe::fillSound,
                 FillAlchemistCauldronRecipe::new
         );
 
@@ -97,10 +104,11 @@ public record FillAlchemistCauldronRecipe(Ingredient input, ItemStack returned,
         }
     }
 
-    public record Builder(Ingredient input, ItemStack returned, FluidStack fluid, boolean mustFitAll) implements RecipeBuilder {
+    public record Builder(Ingredient input, ItemStack returned, FluidStack fluid, boolean mustFitAll,
+                          SoundEvent soundEvent) implements RecipeBuilder {
 
         public Builder(Item input, Item returned, Holder<Fluid> fluid, int amount) {
-            this(Ingredient.of(input), new ItemStack(returned), new FluidStack(fluid, amount), true);
+            this(Ingredient.of(input), new ItemStack(returned), new FluidStack(fluid, amount), true, SoundEvents.BOTTLE_EMPTY);
         }
 
         @Override
@@ -120,7 +128,7 @@ public record FillAlchemistCauldronRecipe(Ingredient input, ItemStack returned,
 
         @Override
         public void save(RecipeOutput recipeOutput, ResourceLocation id) {
-            recipeOutput.accept(id, new FillAlchemistCauldronRecipe(input, returned, fluid, mustFitAll), null);
+            recipeOutput.accept(id, new FillAlchemistCauldronRecipe(input, returned, fluid, mustFitAll, BuiltInRegistries.SOUND_EVENT.wrapAsHolder(soundEvent)), null);
         }
     }
 }

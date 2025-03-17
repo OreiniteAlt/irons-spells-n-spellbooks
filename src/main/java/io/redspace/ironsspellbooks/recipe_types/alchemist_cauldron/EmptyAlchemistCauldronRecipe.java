@@ -6,11 +6,16 @@ import io.redspace.ironsspellbooks.registries.RecipeRegistry;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
@@ -23,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * Recipe Type for taking liquids out of the cauldron (emptying cauldron)
  */
 public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
-                                           FluidStack fluid) implements Recipe<EmptyAlchemistCauldronRecipe.Input> {
+                                           FluidStack fluid,
+                                           Holder<SoundEvent> emptySound) implements Recipe<EmptyAlchemistCauldronRecipe.Input> {
     public record Input(ItemStack item, FluidStack fluid) implements RecipeInput {
         @Override
         public ItemStack getItem(int index) {
@@ -84,12 +90,14 @@ public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
         public static final MapCodec<EmptyAlchemistCauldronRecipe> CODEC = RecordCodecBuilder.mapCodec(builder -> builder.group(
                 Ingredient.CODEC.fieldOf("input").forGetter(EmptyAlchemistCauldronRecipe::input),
                 ItemStack.CODEC.fieldOf("result").forGetter(EmptyAlchemistCauldronRecipe::result),
-                FluidStack.CODEC.fieldOf("fluid").forGetter(EmptyAlchemistCauldronRecipe::fluid)
+                FluidStack.CODEC.fieldOf("fluid").forGetter(EmptyAlchemistCauldronRecipe::fluid),
+                BuiltInRegistries.SOUND_EVENT.holderByNameCodec().optionalFieldOf("sound", BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BOTTLE_FILL)).forGetter(EmptyAlchemistCauldronRecipe::emptySound)
         ).apply(builder, EmptyAlchemistCauldronRecipe::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, EmptyAlchemistCauldronRecipe> STREAM_CODEC = StreamCodec.composite(
                 Ingredient.CONTENTS_STREAM_CODEC, EmptyAlchemistCauldronRecipe::input,
                 ItemStack.STREAM_CODEC, EmptyAlchemistCauldronRecipe::result,
                 FluidStack.STREAM_CODEC, EmptyAlchemistCauldronRecipe::fluid,
+                ByteBufCodecs.holderRegistry(Registries.SOUND_EVENT), EmptyAlchemistCauldronRecipe::emptySound,
                 EmptyAlchemistCauldronRecipe::new
         );
 
@@ -104,12 +112,12 @@ public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
         }
     }
 
-    public record Builder(Ingredient input, ItemStack returned, FluidStack fluid) implements RecipeBuilder {
+    public record Builder(Ingredient input, ItemStack returned, FluidStack fluid,
+                          SoundEvent soundEvent) implements RecipeBuilder {
 
         public Builder(Item input, Item returned, Holder<Fluid> fluid, int amount) {
-            this(Ingredient.of(input), new ItemStack(returned), new FluidStack(fluid, amount));
+            this(Ingredient.of(input), new ItemStack(returned), new FluidStack(fluid, amount), SoundEvents.BOTTLE_FILL);
         }
-
 
         @Override
         public RecipeBuilder unlockedBy(String name, Criterion<?> criterion) {
@@ -128,7 +136,7 @@ public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
 
         @Override
         public void save(RecipeOutput recipeOutput, ResourceLocation id) {
-            recipeOutput.accept(id, new EmptyAlchemistCauldronRecipe(input, returned, fluid), null);
+            recipeOutput.accept(id, new EmptyAlchemistCauldronRecipe(input, returned, fluid, BuiltInRegistries.SOUND_EVENT.wrapAsHolder(soundEvent)), null);
         }
     }
 }

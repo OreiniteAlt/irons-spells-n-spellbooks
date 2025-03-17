@@ -20,12 +20,14 @@ import net.minecraft.Util;
 import net.minecraft.core.*;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
@@ -300,98 +302,99 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
 
     }
 
+    private void doFill(Player player, InteractionHand hand, ItemStack fillresult, FluidStack stack, SoundEvent fillSound) {
+        player.setItemInHand(hand, ItemUtils.createFilledResult(player.getItemInHand(hand), player, fillresult));
+        fluidInventory.fill(stack, IFluidHandler.FluidAction.EXECUTE);
+        this.setChanged();
+        level.playSound(null, this.getBlockPos(), fillSound, SoundSource.BLOCKS);
+    }
+
     public ItemInteractionResult handleUse(BlockState blockState, Level level, BlockPos pos, Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
-        if (level instanceof ServerLevel serverLevel) {
-            SingleRecipeInput fillRecipeInput = new SingleRecipeInput(itemStack);
-            var fillRecipe = serverLevel.getRecipeManager().getRecipeFor(RecipeRegistry.ALCHEMIST_CAULDRON_FILL_TYPE.get(), fillRecipeInput, serverLevel).map(RecipeHolder::value);
-            if (fillRecipe.isEmpty() && itemStack.has(DataComponents.POTION_CONTENTS)) {
-                // dynamic potion handling
-                FluidStack fluid;
-                if (itemStack.get(DataComponents.POTION_CONTENTS).is(Potions.WATER)) {
-                    fluid = new FluidStack(Fluids.WATER, 250);
-                } else {
-                    fluid = PotionFluid.from(itemStack);
-                }
-                fillRecipe = Optional.of(new FillAlchemistCauldronRecipe(Ingredient.of(itemStack), new ItemStack(Items.GLASS_BOTTLE), fluid, true));
+//        if (level instanceof ServerLevel serverLevel) {
+        SingleRecipeInput fillRecipeInput = new SingleRecipeInput(itemStack);
+        var recipeManager = level.getRecipeManager();
+        var fillRecipe = recipeManager.getRecipeFor(RecipeRegistry.ALCHEMIST_CAULDRON_FILL_TYPE.get(), fillRecipeInput, level).map(RecipeHolder::value);
+        if (fillRecipe.isEmpty() && itemStack.has(DataComponents.POTION_CONTENTS)) {
+            // dynamic potion handling
+            FluidStack fluid;
+            if (itemStack.get(DataComponents.POTION_CONTENTS).is(Potions.WATER)) {
+                fluid = new FluidStack(Fluids.WATER, 250);
+            } else {
+                fluid = PotionFluid.from(itemStack);
             }
-            if (fillRecipe.isPresent()) {
-                var recipe = fillRecipe.get();
-                if (!recipe.mustFitAll() || fluidInventory.fill(recipe.result(), IFluidHandler.FluidAction.SIMULATE) == recipe.result().getAmount()) {
-                    player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, recipe.assemble(fillRecipeInput, serverLevel.registryAccess())));
-                    fluidInventory.fill(recipe.result(), IFluidHandler.FluidAction.EXECUTE);
-                    this.setChanged();
-                    return ItemInteractionResult.sidedSuccess(level.isClientSide);
-                }
-            }
-
-            FluidStack topFluid = fluidInventory.drain(1000, IFluidHandler.FluidAction.SIMULATE);
-            EmptyAlchemistCauldronRecipe.Input emptyRecipeInput = new EmptyAlchemistCauldronRecipe.Input(itemStack, topFluid);
-            var emptyRecipe = serverLevel.getRecipeManager().getRecipeFor(RecipeRegistry.ALCHEMIST_CAULDRON_EMPTY_TYPE.get(), emptyRecipeInput, serverLevel);
-            if (emptyRecipe.isPresent()) {
-                var recipe = emptyRecipe.get().value();
-                player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, recipe.assemble(emptyRecipeInput, serverLevel.registryAccess())));
-                fluidInventory.drain(recipe.fluid(), IFluidHandler.FluidAction.EXECUTE);
+            fillRecipe = Optional.of(new FillAlchemistCauldronRecipe(Ingredient.of(itemStack), new ItemStack(Items.GLASS_BOTTLE), fluid, true, BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BOTTLE_EMPTY)));
+        }
+        if (fillRecipe.isPresent()) {
+            var recipe = fillRecipe.get();
+            var amountThatCanFit = fluidInventory.fill(recipe.result(), IFluidHandler.FluidAction.SIMULATE);
+            if ((!recipe.mustFitAll() || amountThatCanFit == recipe.result().getAmount()) && amountThatCanFit != 0) {
+                player.setItemInHand(hand, ItemUtils.createFilledResult(player.getItemInHand(hand), player, recipe.assemble(fillRecipeInput, level.registryAccess())));
+                fluidInventory.fill(recipe.result(), IFluidHandler.FluidAction.EXECUTE);
                 this.setChanged();
-                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+                level.playSound(null, this.getBlockPos(), recipe.fillSound().value(), SoundSource.BLOCKS);
+                return ItemInteractionResult.SUCCESS;
             }
-            if (itemStack.is(Items.GLASS_BOTTLE)) {
-                //dynamic potion handling
-                if (topFluid.is(Fluids.WATER)) {
-                    if (topFluid.getAmount() >= 250) {
-                        player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, Utils.setPotion(new ItemStack(Items.POTION), Potions.WATER)));
-                        fluidInventory.drain(topFluid.copyWithAmount(250), IFluidHandler.FluidAction.EXECUTE);
+        }
+
+        FluidStack topFluid = fluidInventory.drain(1000, IFluidHandler.FluidAction.SIMULATE);
+        EmptyAlchemistCauldronRecipe.Input emptyRecipeInput = new EmptyAlchemistCauldronRecipe.Input(itemStack, topFluid);
+        var emptyRecipe = recipeManager.getRecipeFor(RecipeRegistry.ALCHEMIST_CAULDRON_EMPTY_TYPE.get(), emptyRecipeInput, level).map(RecipeHolder::value);
+        if (emptyRecipe.isEmpty() && itemStack.is(Items.GLASS_BOTTLE)) {
+            // dynamic potion handling
+
+            var potionStack = PotionFluid.from(topFluid);
+            if (!potionStack.isEmpty()) {
+                emptyRecipe = Optional.of(new EmptyAlchemistCauldronRecipe(Ingredient.EMPTY, potionStack, topFluid.copyWithAmount(250), BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BOTTLE_FILL)));
+            }
+        }
+        if (emptyRecipe.isPresent()) {
+            var recipe = emptyRecipe.get();
+            player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, recipe.assemble(emptyRecipeInput, level.registryAccess())));
+            fluidInventory.drain(recipe.fluid(), IFluidHandler.FluidAction.EXECUTE);
+            level.playSound(null, this.getBlockPos(), recipe.emptySound().value(), SoundSource.BLOCKS);
+            this.setChanged();
+            return ItemInteractionResult.SUCCESS;
+        }
+        // item inputting
+        if (isValidInput(itemStack)) {
+            if (!level.isClientSide) {
+                for (int i = 0; i < inputItems.size(); i++) {
+                    var stack = inputItems.get(i);
+                    if (stack.isEmpty()) {
+                        var input = player.getAbilities().instabuild ? itemStack.copy() : itemStack.split(1);
+                        input.setCount(1);
+                        inputItems.set(i, input);
+                        player.setItemInHand(hand, itemStack);
                         this.setChanged();
-                        return ItemInteractionResult.sidedSuccess(level.isClientSide);
-                    }
-                } else if (topFluid.has(DataComponents.POTION_CONTENTS)) {
-                    var potionStack = PotionFluid.from(topFluid);
-                    if (!potionStack.isEmpty()) {
-                        player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, potionStack));
-                        fluidInventory.drain(topFluid.copyWithAmount(250), IFluidHandler.FluidAction.EXECUTE);
-                        this.setChanged();
-                        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+                        break;
                     }
                 }
             }
-            // item inputting
-            if (isValidInput(itemStack)) {
-                if (!level.isClientSide) {
-                    for (int i = 0; i < inputItems.size(); i++) {
-                        var stack = inputItems.get(i);
-                        if (stack.isEmpty()) {
-                            var input = player.getAbilities().instabuild ? itemStack.copy() : itemStack.split(1);
-                            input.setCount(1);
-                            inputItems.set(i, input);
-                            player.setItemInHand(hand, itemStack);
-                            this.setChanged();
-                            break;
-                        }
-                    }
-                }
-                return ItemInteractionResult.sidedSuccess(level.isClientSide);
-            }
-            // item taking
-            else if ((itemStack.isEmpty() || player.isCrouching()) && hand.equals(InteractionHand.MAIN_HAND)) {
-                for (ItemStack item : inputItems) {
-                    if (!item.isEmpty()) {
-                        if (!level.isClientSide) {
-                            var take = item.split(1);
-                            if (player.getItemInHand(hand).isEmpty()) {
-                                player.setItemInHand(hand, take);
-                            } else {
-                                if (!player.getInventory().add(take)) {
-                                    player.drop(take, false);
-                                }
+            return ItemInteractionResult.SUCCESS;
+        }
+        // item taking
+        //fixme: players cannot trigger block interactions while crouching
+        else if ((itemStack.isEmpty() || player.isCrouching()) && hand.equals(InteractionHand.MAIN_HAND)) {
+            for (ItemStack item : inputItems) {
+                if (!item.isEmpty()) {
+                    if (!level.isClientSide) {
+                        var take = item.split(1);
+                        if (player.getItemInHand(hand).isEmpty()) {
+                            player.setItemInHand(hand, take);
+                        } else {
+                            if (!player.getInventory().add(take)) {
+                                player.drop(take, false);
                             }
-                            this.setChanged();
                         }
-                        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+                        this.setChanged();
                     }
+                    return ItemInteractionResult.SUCCESS;
                 }
             }
         }
-        //fixme: cauldron 2: client desync here
+//        }
+        //fixme: consume or pass?
         return ItemInteractionResult.CONSUME;
     }
 
@@ -475,8 +478,8 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
      Cauldron Helpers
      ***********************************************************/
     public boolean isValidInput(ItemStack itemStack) {
-        //fixme: alchemist cauldron 2 stuff
-        return itemStack.is(ItemRegistry.SCROLL.get()) || isBrewable(itemStack) || !itemStack.isEmpty();// AlchemistCauldronRecipeRegistry.isValidIngredient(itemStack);
+        return itemStack.is(ItemRegistry.SCROLL.get()) || isBrewable(itemStack) ||
+                (this.level != null && level.getRecipeManager().getAllRecipesFor(RecipeRegistry.ALCHEMIST_CAULDRON_BREW_TYPE.get()).stream().anyMatch(holder -> holder.value().reagent().test(itemStack)));
     }
 
     public boolean isBrewable(ItemStack itemStack) {

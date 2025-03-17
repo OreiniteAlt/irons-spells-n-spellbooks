@@ -15,6 +15,7 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -63,10 +64,10 @@ public class IronRecipeProvider extends RecipeProvider {
 
         // fixme: modded buckets, even with water, wont work
         new FillAlchemistCauldronRecipe
-                .Builder(Ingredient.of(Items.WATER_BUCKET), new ItemStack(Items.BUCKET), new FluidStack(Fluids.WATER, 1000), false)
+                .Builder(Ingredient.of(Items.WATER_BUCKET), new ItemStack(Items.BUCKET), new FluidStack(Fluids.WATER, 1000), false, SoundEvents.BUCKET_EMPTY)
                 .save(recipeOutput, IronsSpellbooks.id("alchemist_cauldron/fill_water_bucket"));
         new EmptyAlchemistCauldronRecipe
-                .Builder(Ingredient.of(Items.BUCKET), new ItemStack(Items.WATER_BUCKET), new FluidStack(Fluids.WATER, 1000))
+                .Builder(Ingredient.of(Items.BUCKET), new ItemStack(Items.WATER_BUCKET), new FluidStack(Fluids.WATER, 1000), SoundEvents.BUCKET_FILL)
                 .save(recipeOutput, IronsSpellbooks.id("alchemist_cauldron/empty_water_bucket"));
 
         // Upgrade common ink -> uncommon
