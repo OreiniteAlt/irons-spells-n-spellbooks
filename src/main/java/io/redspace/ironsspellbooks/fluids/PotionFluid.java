@@ -85,6 +85,14 @@ public class PotionFluid extends NoopFluid {
         BottleType() {
         }
 
+        public String descriptionId(){
+            return switch(this){
+                case REGULAR -> "potion";
+                case SPLASH -> "splash_potion";
+                case LINGERING -> "lingering_potion";
+            };
+        }
+
         public @NotNull String getSerializedName() {
             return this.toString().toLowerCase(Locale.US);
         }

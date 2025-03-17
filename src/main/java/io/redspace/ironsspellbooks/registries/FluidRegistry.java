@@ -2,6 +2,7 @@ package io.redspace.ironsspellbooks.registries;
 
 import io.redspace.ironsspellbooks.IronsSpellbooks;
 import io.redspace.ironsspellbooks.fluids.NoopFluid;
+import io.redspace.ironsspellbooks.fluids.PotionFluidType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
@@ -23,34 +24,20 @@ public class FluidRegistry {
         FLUID_TYPES.register(eventBus);
     }
 
-    public static final DeferredHolder<FluidType, FluidType> BLOOD_TYPE = FLUID_TYPES.register("blood", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.blood")));
-    public static final DeferredHolder<FluidType, FluidType> COMMON_INK_TYPE = FLUID_TYPES.register("common_ink", () -> new FluidType(FluidType.Properties.create()
-                    .descriptionId("block.irons_spellbooks.common_ink")));
-    public static final DeferredHolder<FluidType, FluidType> UNCOMMON_INK_TYPE = FLUID_TYPES.register("uncommon_ink", () -> new FluidType(FluidType.Properties.create()
-                    .descriptionId("block.irons_spellbooks.uncommon_ink")));
-    public static final DeferredHolder<FluidType, FluidType> RARE_INK_TYPE = FLUID_TYPES.register("rare_ink", () -> new FluidType(FluidType.Properties.create()
-                    .descriptionId("block.irons_spellbooks.rare_ink")));
-    public static final DeferredHolder<FluidType, FluidType> EPIC_INK_TYPE = FLUID_TYPES.register("epic_ink", () -> new FluidType(FluidType.Properties.create()
-                    .descriptionId("block.irons_spellbooks.epic_ink")));
-    public static final DeferredHolder<FluidType, FluidType> LEGENDARY_INK_TYPE = FLUID_TYPES.register("legendary_ink", () -> new FluidType(FluidType.Properties.create()
-                    .descriptionId("block.irons_spellbooks.legendary_ink")));
-    public static final DeferredHolder<FluidType, FluidType> POTION_FLUID_TYPE = FLUID_TYPES.register("potion", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.potion"))); // todo: descriptionid for this one?
-    public static final DeferredHolder<FluidType, FluidType> EVASION_ELIXIR_TYPE = FLUID_TYPES.register("evasion_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.evasion_elixir")));
-    public static final DeferredHolder<FluidType, FluidType> GREATER_EVASION_ELIXIR_TYPE = FLUID_TYPES.register("greater_evasion_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.greater_evasion_elixir")));
-    public static final DeferredHolder<FluidType, FluidType> OAKSKIN_ELIXIR_TYPE = FLUID_TYPES.register("oakskin_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.oakskin_elixir")));
-    public static final DeferredHolder<FluidType, FluidType> GREATER_OAKSKIN_ELIXIR_TYPE = FLUID_TYPES.register("greater_oakskin_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.greater_oakskin_elixir")));
-    public static final DeferredHolder<FluidType, FluidType> INVISIBILITY_ELIXIR_TYPE = FLUID_TYPES.register("invisibility_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.invisibility_elixir")));
-    public static final DeferredHolder<FluidType, FluidType> GREATER_INVISIBILITY_ELIXIR_TYPE = FLUID_TYPES.register("greater_invisibility_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.greater_invisibility_elixir")));
-    public static final DeferredHolder<FluidType, FluidType> GREATER_HEALING_ELIXIR_TYPE = FLUID_TYPES.register("greater_healing_elixir", () -> new FluidType(FluidType.Properties.create()
-            .descriptionId("block.irons_spellbooks.greater_healing_elixir")));
+    public static final DeferredHolder<FluidType, FluidType> BLOOD_TYPE = FLUID_TYPES.register("blood", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> COMMON_INK_TYPE = FLUID_TYPES.register("common_ink", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> UNCOMMON_INK_TYPE = FLUID_TYPES.register("uncommon_ink", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> RARE_INK_TYPE = FLUID_TYPES.register("rare_ink", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> EPIC_INK_TYPE = FLUID_TYPES.register("epic_ink", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> LEGENDARY_INK_TYPE = FLUID_TYPES.register("legendary_ink", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> POTION_FLUID_TYPE = FLUID_TYPES.register("potion", () -> new PotionFluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> EVASION_ELIXIR_TYPE = FLUID_TYPES.register("evasion_elixir", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> GREATER_EVASION_ELIXIR_TYPE = FLUID_TYPES.register("greater_evasion_elixir", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> OAKSKIN_ELIXIR_TYPE = FLUID_TYPES.register("oakskin_elixir", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> GREATER_OAKSKIN_ELIXIR_TYPE = FLUID_TYPES.register("greater_oakskin_elixir", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> INVISIBILITY_ELIXIR_TYPE = FLUID_TYPES.register("invisibility_elixir", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> GREATER_INVISIBILITY_ELIXIR_TYPE = FLUID_TYPES.register("greater_invisibility_elixir", () -> new FluidType(FluidType.Properties.create()));
+    public static final DeferredHolder<FluidType, FluidType> GREATER_HEALING_ELIXIR_TYPE = FLUID_TYPES.register("greater_healing_elixir", () -> new FluidType(FluidType.Properties.create()));
 
 
     public static final DeferredHolder<Fluid, NoopFluid> BLOOD = registerNoop("blood", BLOOD_TYPE::value);

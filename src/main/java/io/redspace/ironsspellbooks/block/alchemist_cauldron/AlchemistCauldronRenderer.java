@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.redspace.ironsspellbooks.gui.overlays.ScreenTooltipOverlay;
 import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
-import joptsimple.internal.Strings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -72,33 +71,29 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
 
             }
         }
-        //fixme: alchemist cauldron 2
-
         var player = Minecraft.getInstance().player;
         if (player != null) {
             if (Math.abs(player.getX() - cauldron.getBlockPos().getX()) < 5 && Math.abs(player.getY() - cauldron.getBlockPos().getY()) < 5 && Math.abs(player.getZ() - cauldron.getBlockPos().getZ()) < 5) {
                 if (player.isCrouching() && Minecraft.getInstance().hitResult instanceof BlockHitResult blockHitResult && blockHitResult.getBlockPos().equals(cauldron.getBlockPos())) {
-                    var font = Minecraft.getInstance().font;
-                    List<ObjectIntImmutablePair<MutableComponent>> fluidInfo = new ArrayList<>();
-                    var fluids = cauldron.fluidInventory.fluids();
-                    int maxLength = 0;
-                    for (int i = fluids.size() - 1; i >= 0; i--) {
-                        var c = Component.translatable(fluids.get(i).getDescriptionId()).withStyle(ChatFormatting.YELLOW);
-                        fluidInfo.add(new ObjectIntImmutablePair<>(c, fluids.get(i).getAmount()));
-                        var l = font.width(c.getString());
-                        if (l > maxLength) {
-                            maxLength = l;
-                        }
-                    }
-                    int widthPerSpace = font.width(" ");
-
                     List<Component> text = new ArrayList<>();
-                    text.add(Component.translatable("block.irons_spellbooks.alchemist_cauldron").append(":"));
-                    for (ObjectIntImmutablePair<MutableComponent> info : fluidInfo) {
-                        int tabs = (maxLength - font.width(info.left().getString())) / widthPerSpace + 2;
-                        text.add(Component.literal("  ").append(info.left()).append(":").append(Strings.repeat(' ', tabs)).append(Component.literal(info.rightInt() + "mb").withStyle(ChatFormatting.GOLD)));
+                    text.add(Component.translatable("block.irons_spellbooks.alchemist_cauldron").withStyle(ChatFormatting.UNDERLINE));
+                    var fluids = cauldron.fluidInventory.fluids();
+                    if (fluids.isEmpty()) {
+                        text.add(Component.translatable("ui.irons_spellbooks.empty").append(" (0/1000mb)").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                    } else {
+                        List<ObjectIntImmutablePair<MutableComponent>> fluidInfo = new ArrayList<>();
+                        for (int i = fluids.size() - 1; i >= 0; i--) {
+                            fluidInfo.add(new ObjectIntImmutablePair<>(Component.translatable(fluids.get(i).getDescriptionId()).withStyle(ChatFormatting.DARK_AQUA), fluids.get(i).getAmount()));
+                        }
+
+                        for (ObjectIntImmutablePair<MutableComponent> info : fluidInfo) {
+                            text.add(Component.literal("  ").append(info.left()).append(": ").append(Component.literal(info.rightInt() + "mb").withStyle(ChatFormatting.GOLD)));
+                        }
+                        text.add(Component.literal(String.format("  (%s/1000mb)", cauldron.getFluidAmount())).withStyle(ChatFormatting.GRAY));
+
                     }
-                    ScreenTooltipOverlay.renderTooltip(text, (sw, sh, mx, my, tw, th) -> new Vector2i(sw / 2 + 20, sh / 2));
+
+                    ScreenTooltipOverlay.renderTooltip(text, (sw, sh, mx, my, tw, th) -> new Vector2i(sw / 2 + 30, sh / 2 - th / 2));
                 }
             }
         }
