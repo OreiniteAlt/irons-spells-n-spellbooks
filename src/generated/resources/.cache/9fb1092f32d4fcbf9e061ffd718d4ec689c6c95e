@@ -1,4 +1,4 @@
-// 1.21.1	2025-03-16T10:26:30.6541584	Recipes
+// 1.21.1	2025-03-17T15:35:19.7424042	Recipes
 5684a9bb618e3b2c2a96dbcb830c5df276de6a27 data/irons_spellbooks/advancement/recipes/misc/affinity_ring.json
 e4a59ea817a6944398503bc85ca3f045e7042510 data/irons_spellbooks/advancement/recipes/misc/cast_time_ring.json
 66ff6686b91a38a9d76a55ac2c0d8ac17148201a data/irons_spellbooks/advancement/recipes/misc/concentration_amulet.json
@@ -62,3 +62,4 @@ e143a96fd8f6c54e62335fbcca903ac0899e9da1 data/irons_spellbooks/recipe/fireward_r
 05ba7370b042a82ccb17469ae94cb8f09b840ab5 data/irons_spellbooks/recipe/heavy_chain_necklace.json
 2dccc4afa900be2abe389d208a30c907d03f0aa9 data/irons_spellbooks/recipe/poisonward_ring.json
 586b89d52c7a15c985a4a86f5774bad648206143 data/irons_spellbooks/recipe/visibility_ring.json
+e3bb7e27b1105466b33e2e0edbb370f7112272d9 data/minecraft/recipe/alchemist_cauldron/soak_crying_obsidian.json

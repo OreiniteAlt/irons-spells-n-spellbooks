@@ -47,6 +47,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -402,6 +403,7 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
         boolean shouldMelt = false;
         /** success is whether the process yields a result*/
         boolean success = true;
+        Optional<ItemStack> byproduct = Optional.empty();
         if (itemStack.is(ItemRegistry.SCROLL.get()) && fluidInventory.contains(Tags.Fluids.WATER, 250)) {
             if (Utils.random.nextFloat() < ServerConfigs.SCROLL_RECYCLE_CHANCE.get()) {
                 fluidInventory.drain(new FluidStack(Fluids.WATER, 250), IFluidHandler.FluidAction.EXECUTE);
@@ -424,6 +426,7 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
                         recipe.results().forEach(result ->
                                 fluidInventory.fill(result, IFluidHandler.FluidAction.EXECUTE)
                         );
+                        byproduct = recipe.byproduct();
                     }
                 }
             }
@@ -445,6 +448,19 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
         }
         if (shouldMelt) {
             itemStack.shrink(1);
+            if (byproduct.isPresent()) {
+                for (int i = 0; i < inputItems.size(); i++) {
+                    var stack = inputItems.get(i);
+                    if (stack.isEmpty()) {
+                        var input = byproduct.get().split(1);
+                        inputItems.set(i, input);
+                        break;
+                    }
+                }
+                // should be impossible, but no space: drop item
+                Vec3 pos = Vec3.upFromBottomCenterOf(this.getBlockPos(), 1);
+                Containers.dropItemStack(level, pos.x, pos.y, pos.z, byproduct.get().split(1));
+            }
             setChanged();
             if (success) {
                 level.playSound(null, this.getBlockPos(), SoundEvents.BREWING_STAND_BREW, SoundSource.MASTER, 1, 1);

@@ -134,19 +134,27 @@ public class IronRecipeProvider extends RecipeProvider {
                 .withReagent(Items.AMETHYST_SHARD)
                 .withResult(FluidRegistry.GREATER_HEALING_ELIXIR_FLUID, 250)
                 .save(recipeOutput);
+
+        //Soak recipes
+        BrewAlchemistCauldronRecipe.builder()
+                .withInput(FluidRegistry.EVASION_ELIXIR_FLUID, 500)
+                .withReagent(Items.OBSIDIAN)
+                .withByproduct(Items.CRYING_OBSIDIAN)
+                .saveSoak(recipeOutput);
+
     }
 
     /**
      * creates recipe for filling the cauldron via this item, and emptying the cauldron to this item, via a glass bottle
      */
-    protected void cauldronBottledInteraction(RecipeOutput output, Holder<Item> item, Holder<Fluid> fluid) {
+    public static void cauldronBottledInteraction(RecipeOutput output, Holder<Item> item, Holder<Fluid> fluid) {
         cauldronTwoWayInteraction(output, item, Holder.direct(Items.GLASS_BOTTLE), fluid, 250);
     }
 
     /**
      * creates recipe for filling the cauldron via this item, and emptying the cauldron to this item
      */
-    protected void cauldronTwoWayInteraction(RecipeOutput output, Holder<Item> item, Holder<Item> vessel, Holder<Fluid> fluid, int amount) {
+    public static void cauldronTwoWayInteraction(RecipeOutput output, Holder<Item> item, Holder<Item> vessel, Holder<Fluid> fluid, int amount) {
         String name = item.unwrapKey().map(key -> key.location().getPath()).orElse("empty");
         new FillAlchemistCauldronRecipe
                 .Builder(item.value(), vessel.value(), fluid, amount)
