@@ -61,6 +61,7 @@ public class IronRecipeProvider extends RecipeProvider {
         cauldronBottledInteraction(recipeOutput, ItemRegistry.INVISIBILITY_ELIXIR, FluidRegistry.INVISIBILITY_ELIXIR_FLUID);
         cauldronBottledInteraction(recipeOutput, ItemRegistry.GREATER_INVISIBILITY_ELIXIR, FluidRegistry.GREATER_INVISIBILITY_ELIXIR_FLUID);
         cauldronBottledInteraction(recipeOutput, ItemRegistry.GREATER_HEALING_POTION, FluidRegistry.GREATER_HEALING_ELIXIR_FLUID);
+        cauldronBottledInteraction(recipeOutput, ItemRegistry.TIMELESS_SLURRY, FluidRegistry.TIMELESS_SLURRY_FLUID);
 
         // fixme: modded buckets, even with water, wont work
         new FillAlchemistCauldronRecipe
@@ -69,6 +70,7 @@ public class IronRecipeProvider extends RecipeProvider {
         new EmptyAlchemistCauldronRecipe
                 .Builder(Ingredient.of(Items.BUCKET), new ItemStack(Items.WATER_BUCKET), new FluidStack(Fluids.WATER, 1000), SoundEvents.BUCKET_FILL)
                 .save(recipeOutput, IronsSpellbooks.id("alchemist_cauldron/empty_water_bucket"));
+
 
         // Upgrade common ink -> uncommon
         BrewAlchemistCauldronRecipe.builder()
@@ -142,6 +144,13 @@ public class IronRecipeProvider extends RecipeProvider {
                 .withReagent(Items.OBSIDIAN)
                 .withByproduct(Items.CRYING_OBSIDIAN)
                 .saveSoak(recipeOutput);
+
+        // Misc
+        BrewAlchemistCauldronRecipe.builder()
+                .withInput(PotionFluid.of(250, Potions.MUNDANE, PotionFluid.BottleType.REGULAR))
+                .withReagent(Items.ECHO_SHARD)
+                .withResult(FluidRegistry.TIMELESS_SLURRY_FLUID, 250)
+                .save(recipeOutput);
 
     }
 
