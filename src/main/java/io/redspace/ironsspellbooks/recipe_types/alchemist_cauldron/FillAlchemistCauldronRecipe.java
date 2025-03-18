@@ -3,6 +3,7 @@ package io.redspace.ironsspellbooks.recipe_types.alchemist_cauldron;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.redspace.ironsspellbooks.IronsSpellbooks;
 import io.redspace.ironsspellbooks.registries.RecipeRegistry;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.core.Holder;
@@ -104,11 +105,41 @@ public record FillAlchemistCauldronRecipe(Ingredient input, ItemStack returned,
         }
     }
 
-    public record Builder(Ingredient input, ItemStack returned, FluidStack fluid, boolean mustFitAll,
-                          SoundEvent soundEvent) implements RecipeBuilder {
+    public static class Builder implements RecipeBuilder {
 
-        public Builder(Item input, Item returned, Holder<Fluid> fluid, int amount) {
-            this(Ingredient.of(input), new ItemStack(returned), new FluidStack(fluid, amount), true, SoundEvents.BOTTLE_EMPTY);
+        SoundEvent soundEvent = SoundEvents.BOTTLE_EMPTY;
+        Ingredient input = null;
+        ItemStack returned = null;
+        FluidStack fluid = null;
+        boolean mustFitAll = true;
+
+        public Builder withInput(Item input) {
+            this.input = Ingredient.of(input);
+            return this;
+        }
+
+        public Builder withReturnItem(Item returned) {
+            this.returned = new ItemStack(returned);
+            return this;
+        }
+
+        public Builder withFluid(Holder<Fluid> fluid, int amount) {
+            return withFluid(new FluidStack(fluid, amount));
+        }
+
+        public Builder withSound(SoundEvent soundEvent) {
+            this.soundEvent = soundEvent;
+            return this;
+        }
+
+        public Builder withFluid(FluidStack fluidStack) {
+            this.fluid = fluidStack;
+            return this;
+        }
+
+        public Builder mustFitAll(boolean mustFitAll) {
+            this.mustFitAll = mustFitAll;
+            return this;
         }
 
         @Override
@@ -124,6 +155,11 @@ public record FillAlchemistCauldronRecipe(Ingredient input, ItemStack returned,
         @Override
         public Item getResult() {
             return returned.getItem();
+        }
+
+        @Override
+        public void save(RecipeOutput recipeOutput) {
+            save(recipeOutput, IronsSpellbooks.id("alchemist_cauldron/fill_" + BuiltInRegistries.ITEM.getKey(input.getItems()[0].getItem()).getPath()));
         }
 
         @Override

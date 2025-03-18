@@ -2,6 +2,7 @@ package io.redspace.ironsspellbooks.recipe_types.alchemist_cauldron;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.redspace.ironsspellbooks.IronsSpellbooks;
 import io.redspace.ironsspellbooks.registries.RecipeRegistry;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.core.Holder;
@@ -112,11 +113,35 @@ public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
         }
     }
 
-    public record Builder(Ingredient input, ItemStack returned, FluidStack fluid,
-                          SoundEvent soundEvent) implements RecipeBuilder {
+    public static class Builder implements RecipeBuilder {
 
-        public Builder(Item input, Item returned, Holder<Fluid> fluid, int amount) {
-            this(Ingredient.of(input), new ItemStack(returned), new FluidStack(fluid, amount), SoundEvents.BOTTLE_FILL);
+        SoundEvent soundEvent = SoundEvents.BOTTLE_FILL;
+        Ingredient input = null;
+        ItemStack returned = null;
+        FluidStack fluid = null;
+
+        public Builder withInput(Item input) {
+            this.input = Ingredient.of(input);
+            return this;
+        }
+
+        public Builder withReturnItem(Item returned) {
+            this.returned = new ItemStack(returned);
+            return this;
+        }
+
+        public Builder withFluid(Holder<Fluid> fluid, int amount) {
+            return withFluid(new FluidStack(fluid, amount));
+        }
+
+        public Builder withSound(SoundEvent soundEvent) {
+            this.soundEvent = soundEvent;
+            return this;
+        }
+
+        public Builder withFluid(FluidStack fluidStack) {
+            this.fluid = fluidStack;
+            return this;
         }
 
         @Override
@@ -132,6 +157,11 @@ public record EmptyAlchemistCauldronRecipe(Ingredient input, ItemStack result,
         @Override
         public Item getResult() {
             return returned.getItem();
+        }
+
+        @Override
+        public void save(RecipeOutput recipeOutput) {
+            recipeOutput.accept(IronsSpellbooks.id("alchemist_cauldron/empty_" + BuiltInRegistries.ITEM.getKey(returned.getItem()).getPath()), new EmptyAlchemistCauldronRecipe(input, returned, fluid, BuiltInRegistries.SOUND_EVENT.wrapAsHolder(soundEvent)), null);
         }
 
         @Override

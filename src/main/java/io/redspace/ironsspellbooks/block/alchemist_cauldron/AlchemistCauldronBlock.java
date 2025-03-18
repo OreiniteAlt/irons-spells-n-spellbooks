@@ -1,11 +1,17 @@
 package io.redspace.ironsspellbooks.block.alchemist_cauldron;
 
 import com.mojang.serialization.MapCodec;
+import io.redspace.ironsspellbooks.capabilities.magic.MagicManager;
+import io.redspace.ironsspellbooks.damage.DamageSources;
+import io.redspace.ironsspellbooks.damage.ISSDamageTypes;
 import io.redspace.ironsspellbooks.registries.BlockRegistry;
+import io.redspace.ironsspellbooks.registries.FluidRegistry;
+import io.redspace.ironsspellbooks.util.ParticleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -22,6 +28,8 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,17 +73,14 @@ public class AlchemistCauldronBlock extends BaseEntityBlock {
 
     @Override
     public void entityInside(BlockState blockState, Level level, BlockPos pos, Entity entity) {
-        //fixme: alchemist cauldron 2
-//        if (entity.tickCount % 20 == 0) {
-//            if (level.getBlockEntity(pos) instanceof AlchemistCauldronTile cauldronTile) {
-//                    if (entity instanceof LivingEntity livingEntity && livingEntity.hurt(DamageSources.get(level, ISSDamageTypes.CAULDRON), 2)) {
-//                        MagicManager.spawnParticles(level, ParticleHelper.BLOOD, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 20, .05, .05, .05, .1, false);
-//                        if (cauldronTile.addToOutput(new ItemStack(ItemRegistry.BLOOD_VIAL.get()))) {
-//                            cauldronTile.setChanged();
-//                        }
-//                    }
-//            }
-//        }
+        if (entity.tickCount % 20 == 0) {
+            if (level.getBlockEntity(pos) instanceof AlchemistCauldronTile cauldronTile) {
+                if (entity instanceof LivingEntity livingEntity && livingEntity.hurt(DamageSources.get(level, ISSDamageTypes.CAULDRON), 2)) {
+                    MagicManager.spawnParticles(level, ParticleHelper.BLOOD, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 20, .05, .05, .05, .1, false);
+                    cauldronTile.fluidInventory.fill(new FluidStack(FluidRegistry.BLOOD, 250), IFluidHandler.FluidAction.EXECUTE);
+                }
+            }
+        }
         super.entityInside(blockState, level, pos, entity);
     }
 

@@ -1,6 +1,5 @@
 package io.redspace.ironsspellbooks.datagen;
 
-import io.redspace.ironsspellbooks.IronsSpellbooks;
 import io.redspace.ironsspellbooks.fluids.PotionFluid;
 import io.redspace.ironsspellbooks.recipe_types.alchemist_cauldron.BrewAlchemistCauldronRecipe;
 import io.redspace.ironsspellbooks.recipe_types.alchemist_cauldron.EmptyAlchemistCauldronRecipe;
@@ -17,7 +16,6 @@ import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -64,12 +62,19 @@ public class IronRecipeProvider extends RecipeProvider {
         cauldronBottledInteraction(recipeOutput, ItemRegistry.TIMELESS_SLURRY, FluidRegistry.TIMELESS_SLURRY_FLUID);
 
         // fixme: modded buckets, even with water, wont work
-        new FillAlchemistCauldronRecipe
-                .Builder(Ingredient.of(Items.WATER_BUCKET), new ItemStack(Items.BUCKET), new FluidStack(Fluids.WATER, 1000), false, SoundEvents.BUCKET_EMPTY)
-                .save(recipeOutput, IronsSpellbooks.id("alchemist_cauldron/fill_water_bucket"));
-        new EmptyAlchemistCauldronRecipe
-                .Builder(Ingredient.of(Items.BUCKET), new ItemStack(Items.WATER_BUCKET), new FluidStack(Fluids.WATER, 1000), SoundEvents.BUCKET_FILL)
-                .save(recipeOutput, IronsSpellbooks.id("alchemist_cauldron/empty_water_bucket"));
+        new FillAlchemistCauldronRecipe.Builder()
+                .withInput(Items.WATER_BUCKET)
+                .withReturnItem(Items.BUCKET)
+                .withFluid(new FluidStack(Fluids.WATER, 1000))
+                .withSound(SoundEvents.BUCKET_EMPTY)
+                .mustFitAll(false)
+                .save(recipeOutput);
+        new EmptyAlchemistCauldronRecipe.Builder()
+                .withInput(Items.BUCKET)
+                .withReturnItem(Items.WATER_BUCKET)
+                .withFluid(new FluidStack(Fluids.WATER, 1000))
+                .withSound(SoundEvents.BUCKET_FILL)
+                .save(recipeOutput);
 
 
         // Upgrade common ink -> uncommon
@@ -165,13 +170,16 @@ public class IronRecipeProvider extends RecipeProvider {
      * creates recipe for filling the cauldron via this item, and emptying the cauldron to this item
      */
     public static void cauldronTwoWayInteraction(RecipeOutput output, Holder<Item> item, Holder<Item> vessel, Holder<Fluid> fluid, int amount) {
-        String name = item.unwrapKey().map(key -> key.location().getPath()).orElse("empty");
-        new FillAlchemistCauldronRecipe
-                .Builder(item.value(), vessel.value(), fluid, amount)
-                .save(output, IronsSpellbooks.id("alchemist_cauldron/fill_" + name));
-        new EmptyAlchemistCauldronRecipe
-                .Builder(vessel.value(), item.value(), fluid, amount)
-                .save(output, IronsSpellbooks.id("alchemist_cauldron/empty_" + name));
+        new FillAlchemistCauldronRecipe.Builder()
+                .withFluid(fluid, amount)
+                .withInput(item.value())
+                .withReturnItem(vessel.value())
+                .save(output);
+        new EmptyAlchemistCauldronRecipe.Builder()
+                .withInput(vessel.value())
+                .withReturnItem(item.value())
+                .withFluid(fluid, amount)
+                .save(output);
     }
 
     protected void simpleRingSalvageRecipe(RecipeOutput output, Item result, Ingredient modifier) {
