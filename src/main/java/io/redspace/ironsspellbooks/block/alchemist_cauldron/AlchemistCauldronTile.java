@@ -27,7 +27,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
@@ -302,16 +301,7 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
 
     }
 
-    private void doFill(Player player, InteractionHand hand, ItemStack fillresult, FluidStack stack, SoundEvent fillSound) {
-        player.setItemInHand(hand, ItemUtils.createFilledResult(player.getItemInHand(hand), player, fillresult));
-        fluidInventory.fill(stack, IFluidHandler.FluidAction.EXECUTE);
-        this.setChanged();
-        level.playSound(null, this.getBlockPos(), fillSound, SoundSource.BLOCKS);
-    }
-
-    public ItemInteractionResult handleUse(BlockState blockState, Level level, BlockPos pos, Player player, InteractionHand hand) {
-        ItemStack itemStack = player.getItemInHand(hand);
-//        if (level instanceof ServerLevel serverLevel) {
+    public ItemStack tryExecuteRecipeInteractions(Level level, ItemStack itemStack) {
         SingleRecipeInput fillRecipeInput = new SingleRecipeInput(itemStack);
         var recipeManager = level.getRecipeManager();
         var fillRecipe = recipeManager.getRecipeFor(RecipeRegistry.ALCHEMIST_CAULDRON_FILL_TYPE.get(), fillRecipeInput, level).map(RecipeHolder::value);
@@ -329,11 +319,10 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
             var recipe = fillRecipe.get();
             var amountThatCanFit = fluidInventory.fill(recipe.result(), IFluidHandler.FluidAction.SIMULATE);
             if ((!recipe.mustFitAll() || amountThatCanFit == recipe.result().getAmount()) && amountThatCanFit != 0) {
-                player.setItemInHand(hand, ItemUtils.createFilledResult(player.getItemInHand(hand), player, recipe.assemble(fillRecipeInput, level.registryAccess())));
                 fluidInventory.fill(recipe.result(), IFluidHandler.FluidAction.EXECUTE);
                 this.setChanged();
                 level.playSound(null, this.getBlockPos(), recipe.fillSound().value(), SoundSource.BLOCKS);
-                return ItemInteractionResult.SUCCESS;
+                return recipe.assemble(fillRecipeInput, level.registryAccess());
             }
         }
 
@@ -350,10 +339,20 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
         }
         if (emptyRecipe.isPresent()) {
             var recipe = emptyRecipe.get();
-            player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, recipe.assemble(emptyRecipeInput, level.registryAccess())));
             fluidInventory.drain(recipe.fluid(), IFluidHandler.FluidAction.EXECUTE);
             level.playSound(null, this.getBlockPos(), recipe.emptySound().value(), SoundSource.BLOCKS);
             this.setChanged();
+            return recipe.assemble(emptyRecipeInput, level.registryAccess());
+        }
+        return ItemStack.EMPTY;
+    }
+
+    public ItemInteractionResult handleUse(BlockState blockState, Level level, BlockPos pos, Player player, InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
+//        if (level instanceof ServerLevel serverLevel) {
+        ItemStack recipeResult = tryExecuteRecipeInteractions(level, itemStack);
+        if (!recipeResult.isEmpty()) {
+            player.setItemInHand(hand, ItemUtils.createFilledResult(player.getItemInHand(hand), player, recipeResult));
             return ItemInteractionResult.SUCCESS;
         }
         // item inputting
