@@ -79,7 +79,7 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
                     text.add(Component.translatable("block.irons_spellbooks.alchemist_cauldron").withStyle(ChatFormatting.UNDERLINE));
                     var fluids = cauldron.fluidInventory.fluids();
                     if (fluids.isEmpty()) {
-                        text.add(Component.translatable("ui.irons_spellbooks.empty").append(" (0/1000mb)").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                        text.add(Component.translatable("ui.irons_spellbooks.empty")/*.append(" (0/1000mb)")*/.withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
                     } else {
                         List<ObjectIntImmutablePair<MutableComponent>> fluidInfo = new ArrayList<>();
                         for (int i = fluids.size() - 1; i >= 0; i--) {
@@ -89,7 +89,7 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
                         for (ObjectIntImmutablePair<MutableComponent> info : fluidInfo) {
                             text.add(Component.literal("  ").append(info.left()).append(": ").append(Component.literal(info.rightInt() + "mb").withStyle(ChatFormatting.GOLD)));
                         }
-                        text.add(Component.literal(String.format("  (%s/1000mb)", cauldron.getFluidAmount())).withStyle(ChatFormatting.GRAY));
+//                        text.add(Component.literal(String.format("  (%s/1000mb)", cauldron.getFluidAmount())).withStyle(ChatFormatting.GRAY));
 
                     }
 
