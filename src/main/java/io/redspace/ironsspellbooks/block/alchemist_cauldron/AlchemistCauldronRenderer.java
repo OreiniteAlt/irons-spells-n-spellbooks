@@ -76,7 +76,7 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
             if (Math.abs(player.getX() - cauldron.getBlockPos().getX()) < 5 && Math.abs(player.getY() - cauldron.getBlockPos().getY()) < 5 && Math.abs(player.getZ() - cauldron.getBlockPos().getZ()) < 5) {
                 if (player.isCrouching() && Minecraft.getInstance().hitResult instanceof BlockHitResult blockHitResult && blockHitResult.getBlockPos().equals(cauldron.getBlockPos())) {
                     List<Component> text = new ArrayList<>();
-                    text.add(Component.translatable("block.irons_spellbooks.alchemist_cauldron").withStyle(ChatFormatting.UNDERLINE));
+                    text.add(Component.translatable("block.irons_spellbooks.alchemist_cauldron").withStyle(ChatFormatting.UNDERLINE, ChatFormatting.WHITE));
                     var fluids = cauldron.fluidInventory.fluids();
                     if (fluids.isEmpty()) {
                         text.add(Component.translatable("ui.irons_spellbooks.empty").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
