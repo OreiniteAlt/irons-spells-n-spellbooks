@@ -15,8 +15,6 @@ import io.redspace.ironsspellbooks.registries.BlockRegistry;
 import io.redspace.ironsspellbooks.registries.ItemRegistry;
 import io.redspace.ironsspellbooks.registries.RecipeRegistry;
 import io.redspace.ironsspellbooks.util.ModTags;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.Util;
 import net.minecraft.core.*;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
@@ -33,11 +31,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -49,7 +45,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.IFluidTank;
@@ -61,7 +56,6 @@ import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public class AlchemistCauldronTile extends BlockEntity implements WorldlyContainer {
     public class AlchemistCauldronFluidHandler implements IFluidHandler {
@@ -559,91 +553,9 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
         for (int i = 0; i < inputItems.size(); i++) {
             simpleContainer.setItem(i, inputItems.get(i));
         }
-        if (level != null)
+        if (level != null) {
             Containers.dropContents(this.level, this.worldPosition, simpleContainer);
-    }
-
-    protected static ItemStack waterBottle() {
-        var stack = new ItemStack(Items.POTION);
-        stack.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.WATER));
-        return stack;
-    }
-
-    /************************************************************
-     Interaction Map
-     ***********************************************************/
-    static Object2ObjectOpenHashMap<Item, AlchemistCauldronInteraction> newInteractionMap() {
-        var map = Util.make(new Object2ObjectOpenHashMap<Item, AlchemistCauldronInteraction>(), (o2o) -> {
-            o2o.defaultReturnValue((tile, blockState, level, pos, itemstack) -> null);
-        });
-
-        map.put(Items.WATER_BUCKET, (tile, blockState, level, pos, itemstack) -> {
-            if (tile.fluidInventory.fill(new FluidStack(Fluids.WATER, 1000), IFluidHandler.FluidAction.EXECUTE) != 0) {
-                level.playSound(null, pos, SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
-                return new ItemStack(Items.BUCKET);
-            } else {
-                return null;
-            }
-        });
-//        map.put(Items.BUCKET, (tile, blockState, level, pos, itemstack) -> {
-//            if (tile.outputItems.stream().allMatch(CauldronPlatformHelper.IS_WATER)) {
-//                tile.outputItems.clear();
-//                level.playSound(null, pos, SoundEvents.BUCKET_FILL, SoundSource.BLOCKS, 1.0F, 1.0F);
-//                return new ItemStack(Items.WATER_BUCKET);
-//            }
-//            return null;
-//        });
-//        map.put(Items.GLASS_BOTTLE, (tile, blockState, level, pos, itemstack) -> {
-//            for (int i = tile.outputItems.size() - 1; i >= 0; i--) {
-//                var stack = tile.outputItems.get(i);
-//                if (!stack.isEmpty()) {
-//                    level.playSound(null, pos, (CauldronPlatformHelper.IS_WATER.test(stack) ? SoundEvents.BOTTLE_FILL : SoundEvents.BOTTLE_FILL_DRAGONBREATH), SoundSource.BLOCKS, 1.0F, 1.0F);
-//                    return stack.split(1);
-//                }
-//            }
-//            return null;
-//        });
-
-        createBottleEmptyInteraction(map, () -> Items.POTION);
-
-        createBottleEmptyInteraction(map, ItemRegistry.INK_COMMON);
-        createBottleEmptyInteraction(map, ItemRegistry.INK_UNCOMMON);
-        createBottleEmptyInteraction(map, ItemRegistry.INK_RARE);
-        createBottleEmptyInteraction(map, ItemRegistry.INK_EPIC);
-        createBottleEmptyInteraction(map, ItemRegistry.INK_LEGENDARY);
-
-        createBottleEmptyInteraction(map, ItemRegistry.BLOOD_VIAL);
-
-        createBottleEmptyInteraction(map, ItemRegistry.OAKSKIN_ELIXIR);
-        createBottleEmptyInteraction(map, ItemRegistry.GREATER_OAKSKIN_ELIXIR);
-
-        createBottleEmptyInteraction(map, ItemRegistry.EVASION_ELIXIR);
-        createBottleEmptyInteraction(map, ItemRegistry.GREATER_EVASION_ELIXIR);
-
-        createBottleEmptyInteraction(map, ItemRegistry.INVISIBILITY_ELIXIR);
-        createBottleEmptyInteraction(map, ItemRegistry.GREATER_INVISIBILITY_ELIXIR);
-
-        createBottleEmptyInteraction(map, ItemRegistry.GREATER_HEALING_POTION);
-
-        NeoForge.EVENT_BUS.post(new AlchemistCauldronBuildInteractionsEvent(map));
-
-        return map;
-    }
-
-    protected static void createBottleEmptyInteraction(Object2ObjectOpenHashMap<Item, AlchemistCauldronInteraction> map, Supplier<Item> item) {
-//        map.put(item.get(), (tile, blockState, level, pos, itemstack) -> {
-//            for (int i = 0; i < tile.outputItems.size(); i++) {
-//                var stack = tile.outputItems.get(i);
-//                if (stack.isEmpty()) {
-//                    var input = itemstack.copy();
-//                    input.setCount(1);
-//                    tile.outputItems.set(i, input);
-//                    level.playSound(null, pos, SoundEvents.BOTTLE_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
-//                    return new ItemStack(Items.GLASS_BOTTLE);
-//                }
-//            }
-//            return null;
-//        });
+        }
     }
 
     /************************************************************
@@ -657,14 +569,14 @@ public class AlchemistCauldronTile extends BlockEntity implements WorldlyContain
 
     @Override
     public boolean canPlaceItemThroughFace(int pIndex, ItemStack pItemStack, @Nullable Direction pDirection) {
-        //any side can insert a valid item into any empty slot
-        return inputItems.get(pIndex).isEmpty() && isValidInput(pItemStack);
+        //any non-bottom side can insert a valid item
+        return pDirection != Direction.DOWN && isValidInput(pItemStack);
     }
 
     @Override
     public boolean canTakeItemThroughFace(int pIndex, ItemStack pStack, Direction pDirection) {
-        //cannot automatically withdraw items
-        return false;
+        // can only withdrawl from botoom
+        return pDirection == Direction.DOWN;
     }
 
     @Override
