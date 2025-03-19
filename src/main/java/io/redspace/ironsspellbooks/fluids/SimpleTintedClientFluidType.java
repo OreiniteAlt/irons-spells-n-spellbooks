@@ -7,7 +7,7 @@ public class SimpleTintedClientFluidType extends SimpleClientFluidType {
 
     public SimpleTintedClientFluidType(ResourceLocation texture, int color) {
         super(texture);
-        this.color = color;
+        this.color = color | 0xFF000000; // force full opacity
     }
 
     @Override
