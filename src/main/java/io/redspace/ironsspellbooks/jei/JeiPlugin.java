@@ -56,7 +56,7 @@ public class JeiPlugin implements IModPlugin {
         IVanillaRecipeFactory vanillaRecipeFactory = registration.getVanillaRecipeFactory();
         registration.addRecipes(ArcaneAnvilRecipeCategory.ARCANE_ANVIL_RECIPE_RECIPE_TYPE, ArcaneAnvilRecipeMaker.getRecipes(vanillaRecipeFactory, ingredientManager));
         registration.addRecipes(ScrollForgeRecipeCategory.SCROLL_FORGE_RECIPE_RECIPE_TYPE, ScrollForgeRecipeMaker.getRecipes(vanillaRecipeFactory, ingredientManager));
-//        registration.addRecipes(AlchemistCauldronRecipeCategory.ALCHEMIST_CAULDRON_RECIPE_TYPE, AlchemistCauldronRecipeMaker.getRecipes(vanillaRecipeFactory, ingredientManager));
+        registration.addRecipes(AlchemistCauldronRecipeCategory.ALCHEMIST_CAULDRON_RECIPE_TYPE, AlchemistCauldronRecipeMaker.getRecipes(vanillaRecipeFactory, ingredientManager));
         registration.addRecipes(RecipeTypes.ANVIL, VanillaAnvilRecipeMaker.getAnvilRepairRecipes(vanillaRecipeFactory));
 
         SpellRegistry.REGISTRY.stream().forEach(spell -> {
@@ -98,6 +98,11 @@ public class JeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(BlockRegistry.ARCANE_ANVIL_BLOCK.get()), ArcaneAnvilRecipeCategory.ARCANE_ANVIL_RECIPE_RECIPE_TYPE);
         registration.addRecipeCatalyst(new ItemStack(BlockRegistry.SCROLL_FORGE_BLOCK.get()), ScrollForgeRecipeCategory.SCROLL_FORGE_RECIPE_RECIPE_TYPE);
         registration.addRecipeCatalyst(new ItemStack(BlockRegistry.ALCHEMIST_CAULDRON.get()), AlchemistCauldronRecipeCategory.ALCHEMIST_CAULDRON_RECIPE_TYPE);
+    }
+
+    @Override
+    public void registerAdvanced(IAdvancedRegistration registration) {
+        registration.addTypedRecipeManagerPlugin(AlchemistCauldronRecipeCategory.ALCHEMIST_CAULDRON_RECIPE_TYPE,new AlchemistCauldronAdvancedHandler());
     }
 
     private static final IIngredientSubtypeInterpreter<ItemStack> SCROLL_INTERPRETER = (stack, context) -> {

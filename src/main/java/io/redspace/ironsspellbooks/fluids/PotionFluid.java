@@ -20,8 +20,6 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-
 public class PotionFluid extends NoopFluid {
     public PotionFluid(BaseFlowingFluid.Properties properties) {
         super(properties);
@@ -75,26 +73,24 @@ public class PotionFluid extends NoopFluid {
     }
 
     public enum BottleType implements StringRepresentable {
-        REGULAR,
-        SPLASH,
-        LINGERING;
+        REGULAR("potion"),
+        SPLASH("splash_potion"),
+        LINGERING("lingering_potion");
+        final String id;
 
         public static final Codec<PotionFluid.BottleType> CODEC = StringRepresentable.fromEnum(PotionFluid.BottleType::values);
         public static final StreamCodec<ByteBuf, PotionFluid.BottleType> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
-        BottleType() {
+        BottleType(String id) {
+            this.id = id;
         }
 
-        public String descriptionId(){
-            return switch(this){
-                case REGULAR -> "potion";
-                case SPLASH -> "splash_potion";
-                case LINGERING -> "lingering_potion";
-            };
+        public String descriptionId() {
+            return id;
         }
 
         public @NotNull String getSerializedName() {
-            return this.toString().toLowerCase(Locale.US);
+            return id;
         }
     }
 }

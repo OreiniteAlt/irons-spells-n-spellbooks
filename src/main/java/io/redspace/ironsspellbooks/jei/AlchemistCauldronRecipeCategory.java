@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,13 +30,14 @@ public class AlchemistCauldronRecipeCategory implements IRecipeCategory<Alchemis
 
     private final IDrawable background;
     private final IDrawable cauldron_block_icon;
-    private final String inputSlotName = "inputSlot";
-    private final String catalystSlotName = "catalystSlot";
-    private final String outputSlotName = "outputSlot";
+    private final String inputSlotName = "itemIn";
+    private final String fluidInputSlotName = "fluidIn";
+    private final String outputSlotNameBase = "outputSlot";
+    private final String byproductSlotName = "byproductSlot";
     private final int paddingBottom = 20;
 
     public AlchemistCauldronRecipeCategory(IGuiHelper guiHelper) {
-        background = guiHelper.drawableBuilder(JeiPlugin.ALCHEMIST_CAULDRON_GUI, 0, 0, 125, 18)
+        background = guiHelper.drawableBuilder(JeiPlugin.ALCHEMIST_CAULDRON_GUI, 0, 0, 125, 19)
                 .addPadding(0, paddingBottom, 0, 0)
                 .build();
         cauldron_block_icon = guiHelper.createDrawableItemStack(new ItemStack(BlockRegistry.ALCHEMIST_CAULDRON.get()));
@@ -63,43 +65,40 @@ public class AlchemistCauldronRecipeCategory implements IRecipeCategory<Alchemis
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, AlchemistCauldronJeiRecipe recipe, IFocusGroup focuses) {
-        List<ItemStack> inputs = recipe.inputs();
-        List<ItemStack> catalysts = recipe.catalysts();
-        List<ItemStack> outputs = recipe.outputs();
-
+        int fluidRenderHeight = 12;
         IRecipeSlotBuilder leftInputSlot = builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
-                .addItemStacks(inputs)
+                .addItemStacks(Arrays.stream(recipe.itemIn().getItems()).toList())
                 .setSlotName(inputSlotName);
 
-        IRecipeSlotBuilder rightInputSlot = builder.addSlot(RecipeIngredientRole.INPUT, 54, 1)
-                .addItemStacks(catalysts)
-                .setSlotName(catalystSlotName);
+        IRecipeSlotBuilder rightInputSlot = builder.addSlot(RecipeIngredientRole.INPUT, 24, 16 - fluidRenderHeight)
+                .addFluidStack(recipe.fluidIn().getFluid(), recipe.fluidIn().getAmount(), recipe.fluidIn().getComponentsPatch())
+                .setFluidRenderer(1000, false, 16, fluidRenderHeight)
+                .setSlotName(fluidInputSlotName);
 
-        IRecipeSlotBuilder outputSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, 108, 1)
-                .addItemStacks(outputs)
-                .setSlotName(outputSlotName);
-
-        if (inputs.size() == catalysts.size()) {
-            if (inputs.size() == outputs.size()) {
-                builder.createFocusLink(leftInputSlot, rightInputSlot, outputSlot);
+        if(!recipe.results().isEmpty()){
+            int width = 16 / recipe.results().size();
+            int diff = 16 - width * recipe.results().size();
+            int xpos = 82;
+            for (int i = 0; i < recipe.results().size(); i++) {
+                int w = width + (i == 0 ? diff : 0);
+                var stack = recipe.results().get(i);
+                IRecipeSlotBuilder outputSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, xpos, 16 - fluidRenderHeight)
+                        .addFluidStack(stack.getFluid(), stack.getAmount(), stack.getComponentsPatch())
+                        .setFluidRenderer(1000, false, w, fluidRenderHeight)
+                        .setSlotName(outputSlotNameBase + i);
+                xpos += w;
             }
-        } else if (inputs.size() == outputs.size() && catalysts.size() == 1) {
-            builder.createFocusLink(leftInputSlot, outputSlot);
-        } else if (catalysts.size() == outputs.size() && inputs.size() == 1) {
-            builder.createFocusLink(rightInputSlot, outputSlot);
         }
+        IRecipeSlotBuilder byproductSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, 108, 1)
+                .addItemStacks(List.of(recipe.resultByproduct()))
+                .setSlotName(byproductSlotName);
+
     }
 
 
     @Override
     public void draw(@NotNull AlchemistCauldronJeiRecipe recipe, IRecipeSlotsView recipeSlotsView, @NotNull GuiGraphics guiHelper, double mouseX, double mouseY) {
         Optional<ItemStack> leftStack = recipeSlotsView.findSlotByName(inputSlotName)
-                .flatMap(IRecipeSlotView::getDisplayedItemStack);
-
-        Optional<ItemStack> rightStack = recipeSlotsView.findSlotByName(catalystSlotName)
-                .flatMap(IRecipeSlotView::getDisplayedItemStack);
-
-        Optional<ItemStack> outputStack = recipeSlotsView.findSlotByName(outputSlotName)
                 .flatMap(IRecipeSlotView::getDisplayedItemStack);
 
         guiHelper.pose().pushPose();
