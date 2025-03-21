@@ -19,6 +19,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -65,33 +66,37 @@ public class AlchemistCauldronRecipeCategory implements IRecipeCategory<Alchemis
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, AlchemistCauldronJeiRecipe recipe, IFocusGroup focuses) {
-        int fluidRenderHeight = 12;
-        IRecipeSlotBuilder leftInputSlot = builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
+        int fluidRenderHeight = 16;
+        IRecipeSlotBuilder itemInput = builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
                 .addItemStacks(Arrays.stream(recipe.itemIn().getItems()).toList())
                 .setSlotName(inputSlotName);
 
-        IRecipeSlotBuilder rightInputSlot = builder.addSlot(RecipeIngredientRole.INPUT, 24, 16 - fluidRenderHeight)
+        IRecipeSlotBuilder fluidInput = builder.addSlot(RecipeIngredientRole.INPUT, 54, 1 + 16 - fluidRenderHeight)
                 .addFluidStack(recipe.fluidIn().getFluid(), recipe.fluidIn().getAmount(), recipe.fluidIn().getComponentsPatch())
-                .setFluidRenderer(1000, false, 16, fluidRenderHeight)
+                .setFluidRenderer(recipe.fluidIn().getAmount(), false, 16, fluidRenderHeight)
                 .setSlotName(fluidInputSlotName);
 
-        if(!recipe.results().isEmpty()){
+        if (!recipe.results().isEmpty()) {
             int width = 16 / recipe.results().size();
             int diff = 16 - width * recipe.results().size();
-            int xpos = 82;
+            int xpos = 108;
+            int maxCap = recipe.results().stream().mapToInt(FluidStack::getAmount).max().getAsInt();
             for (int i = 0; i < recipe.results().size(); i++) {
                 int w = width + (i == 0 ? diff : 0);
                 var stack = recipe.results().get(i);
-                IRecipeSlotBuilder outputSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, xpos, 16 - fluidRenderHeight)
+                IRecipeSlotBuilder outputSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, xpos, 1 + 16 - fluidRenderHeight)
                         .addFluidStack(stack.getFluid(), stack.getAmount(), stack.getComponentsPatch())
-                        .setFluidRenderer(1000, false, w, fluidRenderHeight)
+                        .setFluidRenderer(maxCap, false, w, fluidRenderHeight)
                         .setSlotName(outputSlotNameBase + i);
                 xpos += w;
             }
         }
-        IRecipeSlotBuilder byproductSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, 108, 1)
-                .addItemStacks(List.of(recipe.resultByproduct()))
-                .setSlotName(byproductSlotName);
+        if (!recipe.resultByproduct().isEmpty()) {
+            int ypos = recipe.results().isEmpty() ? 1 : 17;
+            IRecipeSlotBuilder byproductSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, 108, ypos)
+                    .addItemStacks(List.of(recipe.resultByproduct()))
+                    .setSlotName(byproductSlotName);
+        }
 
     }
 

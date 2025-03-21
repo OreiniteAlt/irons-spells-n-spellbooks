@@ -73,20 +73,21 @@ public class PotionFluid extends NoopFluid {
     }
 
     public enum BottleType implements StringRepresentable {
-        REGULAR("potion"),
-        SPLASH("splash_potion"),
-        LINGERING("lingering_potion");
-        final String id;
+        REGULAR("regular", "potion"),
+        SPLASH("splash", "splash_potion"),
+        LINGERING("lingering", "lingering_potion");
+        final String id, descriptionId;
 
         public static final Codec<PotionFluid.BottleType> CODEC = StringRepresentable.fromEnum(PotionFluid.BottleType::values);
         public static final StreamCodec<ByteBuf, PotionFluid.BottleType> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
-        BottleType(String id) {
+        BottleType(String id, String descriptionId) {
             this.id = id;
+            this.descriptionId = descriptionId;
         }
 
         public String descriptionId() {
-            return id;
+            return descriptionId;
         }
 
         public @NotNull String getSerializedName() {

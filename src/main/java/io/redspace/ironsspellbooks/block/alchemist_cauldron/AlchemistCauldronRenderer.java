@@ -83,7 +83,8 @@ public class AlchemistCauldronRenderer implements BlockEntityRenderer<AlchemistC
                     } else {
                         List<ObjectIntImmutablePair<MutableComponent>> fluidInfo = new ArrayList<>();
                         for (int i = fluids.size() - 1; i >= 0; i--) {
-                            fluidInfo.add(new ObjectIntImmutablePair<>(Component.translatable(fluids.get(i).getDescriptionId()).withStyle(ChatFormatting.DARK_AQUA), fluids.get(i).getAmount()));
+                            var fluid  = fluids.get(i);
+                            fluidInfo.add(new ObjectIntImmutablePair<>(fluid.getFluidType().getDescription(fluid).copy().withStyle(ChatFormatting.DARK_AQUA), fluid.getAmount()));
                         }
 
                         for (ObjectIntImmutablePair<MutableComponent> info : fluidInfo) {

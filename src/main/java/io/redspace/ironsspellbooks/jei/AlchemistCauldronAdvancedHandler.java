@@ -55,17 +55,11 @@ public class AlchemistCauldronAdvancedHandler implements ISimpleRecipeManagerPlu
         RecipeManager manager = Minecraft.getInstance().level.getRecipeManager();
         var fluidConversion = manager.getRecipeFor(RecipeRegistry.ALCHEMIST_CAULDRON_FILL_TYPE.get(), new SingleRecipeInput(stack), Minecraft.getInstance().level).map(RecipeHolder::value).map(FillAlchemistCauldronRecipe::result);
         if (fluidConversion.isEmpty()) {
-            if (ServerConfigs.ALLOW_CAULDRON_BREWING.get() && !PotionFluid.from(stack).isEmpty()) {
-                //fixme: this doesnt work, need to manually create potion recipe here
-                fluidConversion = Optional.of(PotionFluid.from(stack));
-            } else {
-                return List.of();
-            }
+            fluidConversion = Optional.of(PotionFluid.from(stack));
         }
-        var fluidStack = fluidConversion.get();
-        return manager.getAllRecipesFor(RecipeRegistry.ALCHEMIST_CAULDRON_BREW_TYPE.get()).stream().map(RecipeHolder::value).filter(brewRecipe -> FluidStack.isSameFluidSameComponents(brewRecipe.fluidIn(), fluidStack)).map(
-                recipe -> new AlchemistCauldronJeiRecipe(recipe.reagent(), recipe.fluidIn(), recipe.results(), recipe.byproduct().orElse(ItemStack.EMPTY))
-        ).toList();
+        return fluidConversion.map(inputFluid -> AlchemistCauldronRecipeMaker.recipes.stream()
+                        .filter(recipe -> FluidStack.isSameFluidSameComponents(recipe.fluidIn(), inputFluid)).toList())
+                .orElse(List.of());
     }
 
     @Override
@@ -79,22 +73,16 @@ public class AlchemistCauldronAdvancedHandler implements ISimpleRecipeManagerPlu
                 .map(EmptyAlchemistCauldronRecipe::fluid).findFirst();
         if (fluidConversion.isEmpty()) {
             if (ServerConfigs.ALLOW_CAULDRON_BREWING.get() && !PotionFluid.from(stack).isEmpty()) {
-                //fixme: this doesnt work, need to manually create potion recipe here
                 fluidConversion = Optional.of(PotionFluid.from(stack));
-            } else {
-                return List.of();
             }
         }
-        var fluidStack = fluidConversion.get();
-        return manager.getAllRecipesFor(RecipeRegistry.ALCHEMIST_CAULDRON_BREW_TYPE.get()).stream().map(RecipeHolder::value).filter(brewRecipe -> brewRecipe.results().stream().anyMatch(result ->
-                FluidStack.isSameFluidSameComponents(result, fluidStack)
-        )).map(
-                recipe -> new AlchemistCauldronJeiRecipe(recipe.reagent(), recipe.fluidIn(), recipe.results(), recipe.byproduct().orElse(ItemStack.EMPTY))
-        ).toList();
+        return fluidConversion.map(outputFluid -> AlchemistCauldronRecipeMaker.recipes.stream()
+                        .filter(recipe -> recipe.results().stream().anyMatch(result -> FluidStack.isSameFluidSameComponents(result, outputFluid))).toList())
+                .orElse(List.of());
     }
 
     @Override
     public List<AlchemistCauldronJeiRecipe> getAllRecipes() {
-        return List.of();
+        return AlchemistCauldronRecipeMaker.recipes;
     }
 }

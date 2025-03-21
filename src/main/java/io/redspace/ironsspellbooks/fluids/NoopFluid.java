@@ -25,7 +25,7 @@ public class NoopFluid extends BaseFlowingFluid {
 
     @Override
     public boolean isSource(FluidState p_207193_1_) {
-        return false;
+        return true;
     }
 
     @Override

@@ -28,17 +28,20 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public final class AlchemistCauldronRecipeMaker {
+    public static List<AlchemistCauldronJeiRecipe> recipes = List.of();
+
     private AlchemistCauldronRecipeMaker() {
         //private constructor prevents anyone from instantiating this class
     }
 
     public static List<AlchemistCauldronJeiRecipe> getRecipes(IVanillaRecipeFactory vanillaRecipeFactory, IIngredientManager ingredientManager) {
-        return Stream.of(
+        recipes = Stream.of(
                         getScrollRecipes(vanillaRecipeFactory, ingredientManager),
                         getCauldronRecipes(vanillaRecipeFactory, ingredientManager),
                         getPotionRecipes(vanillaRecipeFactory, ingredientManager))
                 .flatMap(Function.identity())
                 .toList();
+        return recipes;
     }
 
     private static Stream<AlchemistCauldronJeiRecipe> getScrollRecipes(IVanillaRecipeFactory vanillaRecipeFactory, IIngredientManager ingredientManager) {
