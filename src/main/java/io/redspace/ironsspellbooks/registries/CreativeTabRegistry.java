@@ -48,6 +48,7 @@ public class CreativeTabRegistry {
                 entries.accept(ItemRegistry.DRAGONSKIN_SPELL_BOOK.get());
                 entries.accept(ItemRegistry.VILLAGER_SPELL_BOOK.get());
                 entries.accept(ItemRegistry.DRUIDIC_SPELL_BOOK.get());
+                entries.accept(ItemRegistry.CURSED_DOLL_SPELLBOOK.get());
                 entries.accept(ItemRegistry.BLOOD_STAFF.get());
                 entries.accept(ItemRegistry.GRAYBEARD_STAFF.get());
                 entries.accept(ItemRegistry.ICE_STAFF.get());

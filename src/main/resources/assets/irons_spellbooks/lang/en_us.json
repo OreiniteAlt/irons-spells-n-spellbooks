@@ -313,7 +313,7 @@
   "tooltip.irons_spellbooks.improved_format": "Improved %s",
   "tooltip.irons_spellbooks.enhance_spell_level": "+1 level to %s",
   "tooltip.irons_spellbooks.enhance_spell_level_plural": "+%s levels to %s",
-  "tooltip.irons_spellbooks.empty_affinity_ring": "This ring seems to be empty",
+  "tooltip.irons_spellbooks.empty_affinity_ring": "Unattuned",
   "tooltip.irons_spellbooks.no_affinity": "No",
   "tooltip.irons_spellbooks.instant_mana_description": " Restores %d Mana + %d%% of Max Mana",
   "tooltip.irons_spellbooks.oakskin_description": "+%d%% Damage Reduction",
