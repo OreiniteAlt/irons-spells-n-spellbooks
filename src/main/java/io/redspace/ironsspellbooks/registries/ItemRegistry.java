@@ -173,6 +173,7 @@ public class ItemRegistry {
     public static final DeferredHolder<Item, Item> ICE_CRYSTAL = ITEMS.register("permafrost_shard", () -> new Item(ItemPropertiesHelper.material().rarity(Rarity.RARE)));
     public static final DeferredHolder<Item, Item> ENERGIZED_CORE = ITEMS.register("energized_core", () -> new EnergizedCoreItem(ItemPropertiesHelper.material(1).rarity(Rarity.UNCOMMON)));
     public static final DeferredHolder<Item, Item> CHAINED_BOOK = ITEMS.register("chained_book", () -> new Item(ItemPropertiesHelper.material()));
+    public static final DeferredHolder<Item, Item> BLOODY_VELLUM = ITEMS.register("bloody_vellum", () -> new Item(ItemPropertiesHelper.material()));
 
     public static final DeferredHolder<Item, Item> TIMELESS_SLURRY = ITEMS.register("timeless_slurry", () -> new Item(ItemPropertiesHelper.material().rarity(Rarity.UNCOMMON)));
     public static final DeferredHolder<Item, Item> PYRIUM_INGOT = ITEMS.register("pyrium_ingot", () -> new Item(ItemPropertiesHelper.material().rarity(CinderousRarity.CINDEROUS_RARITY_PROXY.getValue())));
