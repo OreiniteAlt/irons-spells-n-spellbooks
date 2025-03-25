@@ -45,7 +45,7 @@ public class Comet extends AbstractMagicProjectile {
         int count = (int) Math.min(20, Math.round(length) * 4) + 1;
         float f = (float) length / count;
         for (int i = 0; i < count; i++) {
-            Vec3 random = Utils.getRandomVec3(0.03);
+            Vec3 random = Utils.getRandomVec3(0.04);
             Vec3 p = vec.scale(f * i);
             level.addParticle(ParticleHelper.UNSTABLE_ENDER, this.getX() + random.x + p.x, this.getY() + random.y + p.y, this.getZ() + random.z + p.z, random.x, random.y, random.z);
         }

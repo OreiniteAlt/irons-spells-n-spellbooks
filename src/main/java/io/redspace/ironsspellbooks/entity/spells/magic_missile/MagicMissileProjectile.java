@@ -56,27 +56,21 @@ public class MagicMissileProjectile extends AbstractMagicProjectile {
     @Override
     protected void onHitBlock(BlockHitResult blockHitResult) {
         super.onHitBlock(blockHitResult);
-        //irons_spellbooks.LOGGER.debug("MagicMissileProjectile.onHitBlock");
         discard();
-
-
     }
 
     @Override
     protected void onHitEntity(EntityHitResult entityHitResult) {
         super.onHitEntity(entityHitResult);
-        //irons_spellbooks.LOGGER.debug("MagicMissileProjectile.onHitEntity");
-
         DamageSources.applyDamage(entityHitResult.getEntity(), damage, SpellRegistry.MAGIC_MISSILE_SPELL.get().getDamageSource(this, getOwner()));
         discard();
-
     }
 
     @Override
     public void trailParticles() {
         var vec = getDeltaMovement();
         var length = vec.length();
-        int count = (int) Math.min(20, Math.round(length) * 5) + 1;
+        int count = (int) Math.min(20, Math.round(length) * 3) + 1;
         float f = (float) length / count;
         for (int i = 0; i < count; i++) {
             Vec3 random = Utils.getRandomVec3(0.02);
